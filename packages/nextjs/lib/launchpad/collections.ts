@@ -201,6 +201,10 @@ export async function fetchLaunchpadData(): Promise<LaunchpadData> {
 }
 
 async function syncLaunchpadFromChain(provider: RpcProvider, factoryAddress: string): Promise<LaunchpadData> {
+  const existingCollections = await listNftCollections(2000);
+  const existingByAddress = new Map(
+    existingCollections.map((row) => [canonicalAddress(row.collection_address).toLowerCase(), row]),
+  );
 
   const [countRaw, deployFeeRaw, mintFeeRaw] = await Promise.all([
     call(provider, factoryAddress, 'collection_count'),
@@ -218,7 +222,12 @@ async function syncLaunchpadFromChain(provider: RpcProvider, factoryAddress: str
 
   const collectionPromises = addresses.map(async (address, idx) => {
     const collection = await fetchCollectionByAddressWithProvider(provider, address);
-    return { ...collection, index: idx };
+    const existing = existingByAddress.get(collection.address.toLowerCase());
+    return {
+      ...collection,
+      index: idx,
+      imageUrl: collection.imageUrl || existing?.image_url || undefined,
+    };
   });
 
   const collections = (await Promise.all(collectionPromises)).sort((a, b) => b.index - a.index);
@@ -236,7 +245,7 @@ async function syncLaunchpadFromChain(provider: RpcProvider, factoryAddress: str
       progress_pct: item.progressPct,
       base_uri: item.baseUri,
       image_url: item.imageUrl || null,
-      created_tx_hash: null,
+      created_tx_hash: existingByAddress.get(item.address.toLowerCase())?.created_tx_hash || null,
     })),
   );
   await upsertNftLaunchpadMeta({

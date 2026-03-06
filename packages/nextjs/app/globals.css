@@ -5191,9 +5191,10 @@ input[type="file"]::file-selector-button:hover {
 }
 
 .figma-panel {
-  border: 1px solid var(--border-subtle);
+  border: 1px solid rgba(117, 129, 176, 0.22);
   border-radius: var(--radius-lg);
-  background: rgba(20, 20, 82, 0.2);
+  background: linear-gradient(180deg, rgba(22, 28, 56, 0.88) 0%, rgba(12, 16, 34, 0.96) 100%);
+  box-shadow: 0 12px 36px rgba(2, 6, 21, 0.24);
   padding: 0.9rem;
   display: grid;
   gap: 0.9rem;
@@ -5212,18 +5213,19 @@ input[type="file"]::file-selector-button:hover {
 }
 
 .figma-card {
-  border: 1px solid var(--border-default);
+  border: 1px solid rgba(120, 133, 181, 0.26);
   border-radius: var(--radius-md);
-  background: var(--bg-card);
+  background: linear-gradient(180deg, rgba(18, 24, 49, 0.98) 0%, rgba(12, 16, 33, 1) 100%);
   padding: 0.7rem;
   display: grid;
   gap: 0.55rem;
-  transition: border-color var(--transition-fast), transform var(--transition-fast);
+  transition: border-color var(--transition-fast), transform var(--transition-fast), box-shadow var(--transition-fast);
 }
 
 .figma-card:hover {
   border-color: var(--border-accent);
   transform: translateY(-2px);
+  box-shadow: 0 12px 30px rgba(3, 8, 24, 0.28);
 }
 
 .figma-token-head {
@@ -5296,6 +5298,28 @@ input[type="file"]::file-selector-button:hover {
   color: var(--text-tertiary);
   display: grid;
   gap: 0.35rem;
+}
+
+.figma-loading-state {
+  justify-items: center;
+  align-content: center;
+  gap: 0.55rem;
+}
+
+.figma-spinner {
+  width: 20px;
+  height: 20px;
+  border-radius: 999px;
+  border: 2px solid rgba(255, 255, 255, 0.16);
+  border-top-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(255, 107, 88, 0.08);
+  animation: figma-spin 0.9s linear infinite;
+}
+
+@keyframes figma-spin {
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .figma-nft-cover {
@@ -5765,17 +5789,17 @@ button:not(.ghost-button):not(.dex-direction):not(.dex-chip):not(.dex-chip-activ
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 0.5rem;
   padding: 0.45rem;
-  border: 1px solid var(--border-subtle);
+  border: 1px solid rgba(117, 129, 176, 0.2);
   border-radius: var(--radius-lg);
-  background: linear-gradient(90deg, rgba(20, 20, 82, 0.2) 0%, rgba(7, 10, 25, 0.45) 100%);
+  background: linear-gradient(90deg, rgba(24, 31, 61, 0.72) 0%, rgba(11, 15, 33, 0.9) 100%);
 }
 
 .figma-home-stats article {
   min-height: 80px;
-  border: 1px solid var(--border-subtle);
+  border: 1px solid rgba(117, 129, 176, 0.2);
   border-radius: var(--radius-md);
   padding: 0.55rem 0.65rem;
-  background: rgba(16, 20, 43, 0.65);
+  background: linear-gradient(180deg, rgba(26, 34, 67, 0.98) 0%, rgba(16, 21, 42, 1) 100%);
   display: grid;
   gap: 0.2rem;
   transition: border-color var(--transition-fast);
@@ -5801,9 +5825,10 @@ button:not(.ghost-button):not(.dex-direction):not(.dex-chip):not(.dex-chip-activ
 
 /* ── Featured Blocks ── */
 .figma-home-block {
-  border: 1px solid rgba(80, 87, 120, 0.2);
+  border: 1px solid rgba(117, 129, 176, 0.22);
   border-radius: var(--radius-lg);
-  background: linear-gradient(105deg, rgba(18, 21, 46, 0.88) 0%, rgba(9, 12, 29, 0.95) 55%, rgba(8, 10, 24, 0.97) 100%);
+  background: linear-gradient(105deg, rgba(24, 31, 61, 0.92) 0%, rgba(12, 16, 34, 0.97) 55%, rgba(10, 13, 28, 0.99) 100%);
+  box-shadow: 0 14px 36px rgba(3, 8, 24, 0.22);
   padding: 0.85rem;
   display: grid;
   gap: 0.75rem;
@@ -6190,9 +6215,9 @@ button:not(.ghost-button):not(.dex-direction):not(.dex-chip):not(.dex-chip-activ
 .figma-token-card {
   display: grid;
   gap: 0;
-  border: 1px solid var(--border-subtle);
+  border: 1px solid rgba(121, 135, 184, 0.24);
   border-radius: var(--radius-lg);
-  background: var(--bg-elevated);
+  background: linear-gradient(180deg, rgba(20, 27, 53, 0.98) 0%, rgba(11, 16, 33, 1) 100%);
   padding: 0;
   overflow: hidden;
   transition: border-color var(--transition-base), transform var(--transition-base), box-shadow var(--transition-base);
@@ -6201,7 +6226,7 @@ button:not(.ghost-button):not(.dex-direction):not(.dex-chip):not(.dex-chip-activ
 .figma-token-card:hover {
   border-color: var(--border-accent);
   transform: translateY(-2px);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+  box-shadow: 0 14px 28px rgba(3, 8, 24, 0.3);
 }
 
 .figma-token-card-header {
@@ -6331,17 +6356,17 @@ button:not(.ghost-button):not(.dex-direction):not(.dex-chip):not(.dex-chip-activ
 
 .figma-nft-card-v2 {
   display: grid;
-  border: 1px solid var(--border-subtle);
+  border: 1px solid rgba(121, 135, 184, 0.24);
   border-radius: var(--radius-lg);
   overflow: hidden;
-  background: var(--bg-elevated);
+  background: linear-gradient(180deg, rgba(19, 26, 52, 0.98) 0%, rgba(11, 16, 33, 1) 100%);
   transition: border-color var(--transition-base), transform var(--transition-base), box-shadow var(--transition-base);
 }
 
 .figma-nft-card-v2:hover {
   border-color: var(--border-accent);
   transform: translateY(-3px);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+  box-shadow: 0 14px 28px rgba(3, 8, 24, 0.3);
 }
 
 .figma-nft-card-v2-media {
@@ -6793,6 +6818,55 @@ button:not(.ghost-button):not(.dex-direction):not(.dex-chip):not(.dex-chip-activ
 
 /* ── Responsive ── */
 @media (max-width: 820px) {
+  .figma-panel,
+  .figma-home-block,
+  .figma-card,
+  .figma-token-card,
+  .figma-nft-card-v2,
+  .figma-home-stats article {
+    border-color: rgba(124, 136, 182, 0.28);
+    box-shadow: 0 10px 30px rgba(1, 5, 20, 0.28);
+  }
+
+  .figma-panel,
+  .figma-card {
+    background: linear-gradient(180deg, rgba(19, 25, 50, 0.96) 0%, rgba(12, 16, 33, 0.98) 100%);
+  }
+
+  .figma-home-block {
+    background: linear-gradient(180deg, rgba(21, 28, 56, 0.95) 0%, rgba(10, 14, 31, 0.98) 100%);
+  }
+
+  .figma-token-card,
+  .figma-nft-card-v2 {
+    background: linear-gradient(180deg, rgba(17, 24, 49, 0.98) 0%, rgba(11, 16, 32, 1) 100%);
+  }
+
+  .figma-home-stats {
+    background: linear-gradient(180deg, rgba(18, 24, 50, 0.92) 0%, rgba(9, 13, 29, 0.98) 100%);
+    border-color: rgba(124, 136, 182, 0.24);
+  }
+
+  .figma-home-stats article {
+    background: linear-gradient(180deg, rgba(24, 31, 62, 0.98) 0%, rgba(15, 20, 40, 1) 100%);
+  }
+
+  .figma-home-head p,
+  .figma-token-card-row span,
+  .figma-token-card-identity p,
+  .figma-nft-card-v2-price span,
+  .figma-nft-card-v2-progress-head,
+  .figma-home-stats span {
+    color: rgba(213, 219, 241, 0.72);
+  }
+
+  .figma-home-head h2,
+  .figma-token-card-identity h3,
+  .figma-nft-card-v2-body > h3,
+  .figma-nft-card-v2-head h3 {
+    color: rgba(248, 250, 255, 0.98);
+  }
+
   .figma-spotlight-v2 {
     grid-template-columns: 1fr;
     max-height: none;
@@ -6816,5 +6890,29 @@ button:not(.ghost-button):not(.dex-direction):not(.dex-chip):not(.dex-chip-activ
 
   .figma-nft-filter-selects select {
     flex: 1;
+  }
+}
+
+@media (max-width: 680px) {
+  .figma-panel,
+  .figma-home-block {
+    padding: 0.95rem;
+    border-radius: 1.1rem;
+  }
+
+  .figma-home-stats {
+    gap: 0.65rem;
+    padding: 0.65rem;
+  }
+
+  .figma-home-stats article {
+    min-height: 88px;
+    padding: 0.7rem 0.8rem;
+  }
+
+  .figma-token-card,
+  .figma-nft-card-v2,
+  .figma-card {
+    border-width: 1px;
   }
 }
