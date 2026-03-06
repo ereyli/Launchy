@@ -7,7 +7,7 @@ const PUBLIC_CHAIN_CONFIG = {
   EKUBO_SWAP_FEE_ROUTER_ADDRESS: '0x01a3e3b19af8daf8ee82a50b939644afcdaab27df35266e0dbf24746ff3ddedc',
   EKUBO_CORE_ADDRESS: '0x00000005dd3d2f4429af886cd1a3b08289dbcea99a294197e9eb43b0e0325b4b',
   EKUBO_POSITIONS_ADDRESS: '0x02e0af29598b407c8716b17f6d2795eca1b471413fa03fb145a5e33722184067',
-  PAYMASTER_URL: 'https://starknet-sepolia.api.avnu.fi/paymaster/v1/5e4c237c-8018-49ad-be9b-d4086d5b9acc',
+  PAYMASTER_URL: '/api/paymaster',
 } as const;
 
 export const env = {

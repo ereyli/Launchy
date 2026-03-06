@@ -1,4 +1,4 @@
-import TokensPage, { dynamic } from '~~/app/tokens/page';
+import TokensPage, { revalidate } from '~~/app/tokens/page';
 
-export { dynamic };
+export { revalidate };
 export default TokensPage;

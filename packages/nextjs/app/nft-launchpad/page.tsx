@@ -1,4 +1,4 @@
-import CollectionsPage, { dynamic } from '~~/app/collections/page';
+import CollectionsPage, { revalidate } from '~~/app/collections/page';
 
-export { dynamic };
+export { revalidate };
 export default CollectionsPage;

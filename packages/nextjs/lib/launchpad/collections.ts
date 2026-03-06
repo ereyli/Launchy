@@ -81,6 +81,47 @@ function decodeContractString(raw: string[]) {
   return tryDecodeShortString(raw[0] ?? '');
 }
 
+function ipfsUriToGateway(uri: string) {
+  const trimmed = uri.trim();
+  if (!trimmed) return '';
+  if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) return trimmed;
+  if (trimmed.startsWith('ipfs://ipfs/')) return `https://gateway.pinata.cloud/ipfs/${trimmed.slice('ipfs://ipfs/'.length)}`;
+  if (trimmed.startsWith('ipfs://')) return `https://gateway.pinata.cloud/ipfs/${trimmed.slice('ipfs://'.length)}`;
+  return '';
+}
+
+async function resolveCollectionImage(metadataUri: string, contractUri: string, baseUri: string) {
+  const metadataTarget = ipfsUriToGateway(contractUri) || ipfsUriToGateway(metadataUri);
+  if (metadataTarget) {
+    try {
+      const response = await fetch(metadataTarget, { next: { revalidate: 3600 } });
+      if (response.ok) {
+        const payload = (await response.json()) as {
+          image?: string;
+          image_url?: string;
+          imageUrl?: string;
+          banner_image?: string;
+          featured_image?: string;
+        };
+        const candidate =
+          payload.image ||
+          payload.image_url ||
+          payload.imageUrl ||
+          payload.banner_image ||
+          payload.featured_image ||
+          '';
+        const resolved = ipfsUriToGateway(candidate) || candidate;
+        if (resolved) return resolved;
+      }
+    } catch {
+      // fallback to alias-store resolution below
+    }
+  }
+
+  const pinata = await getPinataAlias(baseUri);
+  return pinata ? ipfsGatewayUrl(pinata.imageCid) : undefined;
+}
+
 async function call(provider: RpcProvider, contractAddress: string, entrypoint: string, calldata: string[] = []) {
   return provider.callContract({
     contractAddress,
@@ -94,7 +135,7 @@ async function fetchCollectionByAddressWithProvider(
   address: string,
 ): Promise<LaunchCollection> {
 
-  const [nameRaw, symbolRaw, creatorRaw, freeRaw, mintPriceRaw, mintedRaw, maxSupplyRaw, baseUriRaw] = await Promise.all([
+  const [nameRaw, symbolRaw, creatorRaw, freeRaw, mintPriceRaw, mintedRaw, maxSupplyRaw, baseUriRaw, metadataUriRaw, contractUriRaw] = await Promise.all([
     call(provider, address, 'name'),
     call(provider, address, 'symbol'),
     call(provider, address, 'owner'),
@@ -103,6 +144,8 @@ async function fetchCollectionByAddressWithProvider(
     call(provider, address, 'total_supply'),
     call(provider, address, 'max_supply'),
     call(provider, address, 'base_uri'),
+    call(provider, address, 'metadata_uri'),
+    call(provider, address, 'contract_uri'),
   ]);
 
   const minted = Number(toBigInt(mintedRaw[0]));
@@ -111,7 +154,9 @@ async function fetchCollectionByAddressWithProvider(
   const model = toBigInt(freeRaw[0]) === 1n ? 'free' : 'paid';
   const mintPriceStrk = formatStrk(parseU256(mintPriceRaw[0], mintPriceRaw[1]));
   const baseUri = decodeContractString(baseUriRaw);
-  const pinata = await getPinataAlias(baseUri);
+  const metadataUri = decodeContractString(metadataUriRaw);
+  const contractUri = decodeContractString(contractUriRaw);
+  const imageUrl = await resolveCollectionImage(metadataUri, contractUri, baseUri);
 
   return {
     index: 0,
@@ -125,7 +170,7 @@ async function fetchCollectionByAddressWithProvider(
     maxSupply,
     progressPct,
     baseUri,
-    imageUrl: pinata ? ipfsGatewayUrl(pinata.imageCid) : undefined,
+    imageUrl,
   };
 }
 

@@ -167,7 +167,9 @@ export function WalletConnect({ compact = false }: { compact?: boolean }) {
               </button>
             </div>
           )}
-          <small className="muted wallet-hint">AVNU paymaster active</small>
+          <small className="muted wallet-hint">
+            Cartridge uses sponsored mainnet flow. Browser wallets fall back to user-paid gas.
+          </small>
         </>
       )}
       {error ? <small className="wallet-error">{error}</small> : null}
