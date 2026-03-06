@@ -29,6 +29,8 @@ const nextConfig: NextConfig = {
               "img-src 'self' data: blob: https:",
               "font-src 'self' data: https:",
               "connect-src 'self' https: wss:",
+              "frame-src 'self' https://x.cartridge.gg https://*.cartridge.gg",
+              "child-src 'self' https://x.cartridge.gg https://*.cartridge.gg",
               "frame-ancestors 'none'",
               "base-uri 'self'",
               "form-action 'self'",
