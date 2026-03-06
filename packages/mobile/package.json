@@ -1,6 +1,7 @@
 {
   "name": "@launchpad/mobile",
   "private": true,
+  "version": "0.0.0",
   "main": "expo/AppEntry",
   "scripts": {
     "start": "expo start",

@@ -1,6 +1,7 @@
 {
   "name": "@launchpad/cairo",
   "private": true,
+  "version": "0.0.0",
   "scripts": {
     "compile": "scarb build",
     "test": "scarb test"

@@ -1,6 +1,7 @@
 {
   "name": "starknet-nft-launchpad",
   "private": true,
+  "packageManager": "yarn@3.2.3",
   "workspaces": [
     "packages/cairo",
     "packages/nextjs",
