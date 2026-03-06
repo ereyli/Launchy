@@ -12,6 +12,12 @@
     "start": "yarn workspace @launchpad/nextjs dev",
     "start:mobile": "yarn workspace @launchpad/mobile start",
     "ios:mobile": "yarn workspace @launchpad/mobile ios",
-    "android:mobile": "yarn workspace @launchpad/mobile android"
+    "android:mobile": "yarn workspace @launchpad/mobile android",
+    "contributors:add": "all-contributors add",
+    "contributors:generate": "all-contributors generate",
+    "contributors:check": "all-contributors check"
+  },
+  "devDependencies": {
+    "all-contributors-cli": "^6.26.1"
   }
 }
