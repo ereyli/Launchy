@@ -1,0 +1,105 @@
+Design a premium, modern, conversion-focused web app UI for a “Starknet NFT + Token Launchpad” called “Launchy”.
+
+Goal:
+Create a complete, production-ready design system and key screens for both desktop and mobile with clear states, strong hierarchy, and smooth responsive behavior.
+
+Brand + Style:
+- Visual direction: dark elegant Web3 (trustworthy, clean, bold)
+- Color system: deep navy base + coral accent (high contrast, accessible)
+- Tone: premium, technical, creator-first
+- Typography: expressive display + clean readable body
+- Use consistent spacing, radius, shadows, and tokenized styles
+
+Information Architecture:
+- Primary user modes: Creator and Trader
+- Main navigation:
+  1) Home
+  2) NFT Launchpad
+  3) Token Launchpad
+  4) Profile/Portfolio
+  5) Create (primary CTA)
+
+Required Screens (Desktop + Mobile):
+1) Home / Landing
+- Hero with dual CTA: “Launch Token” and “Create NFT Collection”
+- Live stats strip (deployed tokens, listed tokens, collections, minted NFTs)
+- Featured token cards + featured NFT cards
+- “How it works” section (3 steps)
+- Trust section (Starknet + gasless mint + Ekubo integration)
+
+2) Token Launchpad (Market/Discover)
+- Search + filters + sort
+- Token cards with status badges (Listed / Deployed)
+- Card metrics: supply, market cap, symbol, quick action
+- Empty, loading, and error states
+
+3) NFT Launchpad (Market/Discover)
+- Search + filters (Free/Paid) + sort
+- Collection cards with mint progress bar
+- Card metrics: minted/max supply, mint price, model
+- Spotlight area for trending collection
+- Empty, loading, and error states
+
+4) Create Token (Multi-step Wizard)
+- Stepper: Basics -> Economics -> Branding -> Review -> Deploy
+- Inputs, helper text, validation, disabled/loading states
+- Quick preset chips for market cap
+- Success modal with tx hash + token address + copy actions
+
+5) Create NFT Collection (Multi-step Wizard)
+- Stepper: Basics -> Supply & Mint Model -> Media -> Review -> Deploy
+- Free/Paid model selector
+- Per-wallet mint options
+- Image upload preview
+- Success modal with tx hash + collection address + mint link
+
+6) Token Detail + Trade Panel
+- Token header with logo, symbol, address, badges
+- Price chart area
+- Trade panel (Buy/Sell tabs, slippage, balance, submit states)
+- Recent trades list/table
+- Pending tx / success / failure states
+
+7) Collection Detail + Mint Page
+- Collection hero with image + metadata
+- Mint progress + supply stats
+- Mint form with quantity stepper
+- Total cost + fee breakdown
+- Mint success/failure states
+
+8) Creator Profile / Dashboard
+- Portfolio summary cards
+- Deployed assets list (tokens + collections)
+- Fees/earnings section
+- Quick actions
+
+Responsive Rules:
+- Desktop: 12-column grid
+- Tablet/mobile: stacked layout, simplified controls
+- Mobile must prioritize thumb-friendly actions and reduced cognitive load
+- Include bottom tab navigation pattern for mobile
+
+Components to Include:
+- Buttons (primary, secondary, ghost, destructive, disabled, loading)
+- Inputs/select/textarea/file upload
+- Chips/badges/tags
+- Tabs/segmented controls
+- Cards (token, collection, stats)
+- Modals/overlays
+- Toast/alerts
+- Skeleton loaders
+- Empty states
+
+Accessibility:
+- WCAG contrast-compliant
+- Visible focus states
+- Clear form error messaging
+- Keyboard-friendly components
+
+Output:
+- One Figma file with:
+  - Design tokens page (colors, type, spacing, radius, shadows)
+  - Components page (variants + states)
+  - Desktop screens
+  - Mobile screens
+  - Basic prototype links between key flows

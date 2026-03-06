@@ -1,0 +1,17 @@
+{
+  "name": "starknet-nft-launchpad",
+  "private": true,
+  "workspaces": [
+    "packages/cairo",
+    "packages/nextjs",
+    "packages/mobile"
+  ],
+  "scripts": {
+    "compile": "yarn workspace @launchpad/cairo compile",
+    "test": "yarn workspace @launchpad/cairo test",
+    "start": "yarn workspace @launchpad/nextjs dev",
+    "start:mobile": "yarn workspace @launchpad/mobile start",
+    "ios:mobile": "yarn workspace @launchpad/mobile ios",
+    "android:mobile": "yarn workspace @launchpad/mobile android"
+  }
+}

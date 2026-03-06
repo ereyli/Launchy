@@ -1,0 +1,28 @@
+{
+  "expo": {
+    "name": "Launchy Mobile",
+    "slug": "launchy-mobile",
+    "scheme": "launchy",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "dark",
+    "splash": {
+      "resizeMode": "contain",
+      "backgroundColor": "#060B14"
+    },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTablet": true
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#060B14"
+      }
+    },
+    "web": {
+      "bundler": "metro"
+    }
+  }
+}

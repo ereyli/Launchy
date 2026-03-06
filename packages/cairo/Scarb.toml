@@ -1,0 +1,21 @@
+[package]
+name = "launchpad_cairo"
+version = "0.1.0"
+edition = "2024_07"
+license = "MIT"
+
+[cairo]
+sierra-replace-ids = true
+
+[[target.starknet-contract]]
+
+[dependencies]
+starknet = "2.12.1"
+openzeppelin_token = "1.0.0"
+openzeppelin_introspection = "1.0.0"
+
+[dev-dependencies]
+cairo_test = "2.12.1"
+
+[tool.sncast]
+build_tool = "scarb"
