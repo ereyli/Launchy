@@ -51,6 +51,7 @@ export function HomePageClient() {
   const topNfts = collections.slice(0, 3);
   const totalMinted = useMemo(() => collections.reduce((acc, c) => acc + c.minted, 0), [collections]);
   const listed = useMemo(() => tokens.filter((t) => t.isLaunched).length, [tokens]);
+  const isLoading = data === null;
 
   return (
     <main className="figma-home">
@@ -80,7 +81,7 @@ export function HomePageClient() {
           <Link href="/token-launchpad" className="home-section-more">View All →</Link>
         </div>
         <div className="figma-home-cards">
-          {topTokens.length === 0 ? <LoadingState title="Loading tokens" description="Fetching latest market data." /> : topTokens.map((token) => {
+          {isLoading ? <LoadingState title="Loading tokens" description="Fetching latest market data." /> : topTokens.length === 0 ? <div className="figma-empty"><h3>No tokens yet</h3><p>Token cards will appear here after they are indexed into storage.</p></div> : topTokens.map((token) => {
             const hue = hueFromAddress(token.address);
             const changeValue = ((Math.abs(hue - 180) / 180) * 30 + 2).toFixed(1);
             return (
@@ -111,7 +112,7 @@ export function HomePageClient() {
           <Link href="/nft-launchpad" className="home-section-more">View All →</Link>
         </div>
         <div className="figma-home-cards">
-          {topNfts.length === 0 ? <LoadingState title="Loading collections" description="Fetching latest mint data." /> : topNfts.map((collection) => {
+          {isLoading ? <LoadingState title="Loading collections" description="Fetching latest mint data." /> : topNfts.length === 0 ? <div className="figma-empty"><h3>No collections yet</h3><p>NFT cards will appear here after they are indexed into storage.</p></div> : topNfts.map((collection) => {
             const hue = hueFromAddress(collection.address);
             return (
               <Link key={collection.address} href={`/collection/${collection.address}`} className="figma-nft-card-v2">

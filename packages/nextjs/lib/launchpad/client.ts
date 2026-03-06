@@ -3,6 +3,7 @@
 import { CallData, RpcProvider, byteArray, cairo, type Call } from 'starknet';
 import { env } from '~~/lib/config';
 import { canonicalAddress } from '~~/lib/starknet/address';
+import { CLIENT_RPC_PROXY_PATH } from '~~/lib/starknet/rpc';
 import { requireWalletSession } from '~~/lib/starknet/wallet-session';
 
 export type CreateCollectionInput = {
@@ -15,6 +16,24 @@ export type CreateCollectionInput = {
   baseUri: string;
   metadataUri: string;
   contractMetadataUri: string;
+};
+
+export type SubmittedCollectionCreate = {
+  txHash: string;
+  confirmed: Promise<{
+    txHash: string;
+    collectionAddress: string;
+    input: CreateCollectionInput;
+  }>;
+};
+
+export type SubmittedMint = {
+  txHash: string;
+  confirmed: Promise<{
+    txHash: string;
+    collectionAddress: string;
+    quantity: number;
+  }>;
 };
 
 function parseStrkToWei(input: string) {
@@ -47,10 +66,8 @@ function formatUnits(value: bigint, decimals: bigint) {
   return `${whole}.${fraction.toString().padStart(Number(decimals), '0').replace(/0+$/, '')}`;
 }
 
-const DEFAULT_RPC = 'https://starknet-mainnet-rpc.publicnode.com';
-
 function getReadProvider() {
-  return new RpcProvider({ nodeUrl: env.NEXT_PUBLIC_STARKNET_RPC || DEFAULT_RPC });
+  return new RpcProvider({ nodeUrl: CLIENT_RPC_PROXY_PATH });
 }
 
 async function readContract(
@@ -59,11 +76,14 @@ async function readContract(
   entrypoint: string,
   calldata: string[] = [],
 ) {
-  return provider.callContract({
-    contractAddress,
-    entrypoint,
-    calldata,
-  });
+  return provider.callContract(
+    {
+      contractAddress,
+      entrypoint,
+      calldata,
+    },
+    'latest',
+  );
 }
 
 function sleep(ms: number) {
@@ -99,7 +119,7 @@ async function resolveCollectionFromFactoryFallback(
   return '';
 }
 
-export async function createCollection(input: CreateCollectionInput) {
+export async function createCollection(input: CreateCollectionInput): Promise<SubmittedCollectionCreate> {
   if (!env.NEXT_PUBLIC_FACTORY_ADDRESS) {
     throw new Error('NEXT_PUBLIC_FACTORY_ADDRESS is missing.');
   }
@@ -177,48 +197,54 @@ export async function createCollection(input: CreateCollectionInput) {
   };
 
   const tx = await session.execute([approveCall, createCall], { sponsored: true });
-  await tx.wait();
-
-  let collectionAddress = '';
-  try {
-    const receipt = await provider.getTransactionReceipt(tx.hash);
-    const events = ((receipt as any)?.events ?? []) as Array<{
-      from_address?: string;
-      fromAddress?: string;
-      keys?: string[];
-      data?: string[];
-    }>;
-    const factory = canonicalAddress(env.NEXT_PUBLIC_FACTORY_ADDRESS).toLowerCase();
-    const factoryEvent = events.find((event) => {
-      const from = canonicalAddress(event.from_address ?? event.fromAddress ?? '').toLowerCase();
-      const firstData = event.data?.[0] ?? '';
-      return from === factory && firstData.startsWith('0x');
-    });
-    collectionAddress = canonicalAddress(factoryEvent?.data?.[0] ?? '');
-  } catch {
-    // Receipt parsing can fail on some wallet/provider combinations.
-  }
-
-  if (!collectionAddress) {
-    for (let i = 0; i < 8; i += 1) {
-      collectionAddress = await resolveCollectionFromFactoryFallback(
-        provider,
-        env.NEXT_PUBLIC_FACTORY_ADDRESS,
-        session.address,
-      );
-      if (collectionAddress) break;
-      await sleep(1500);
-    }
-  }
 
   return {
     txHash: tx.hash,
-    collectionAddress,
-    input,
+    confirmed: (async () => {
+      await tx.wait();
+
+      let collectionAddress = '';
+      try {
+        const receipt = await provider.getTransactionReceipt(tx.hash);
+        const events = ((receipt as any)?.events ?? []) as Array<{
+          from_address?: string;
+          fromAddress?: string;
+          keys?: string[];
+          data?: string[];
+        }>;
+        const factory = canonicalAddress(env.NEXT_PUBLIC_FACTORY_ADDRESS).toLowerCase();
+        const factoryEvent = events.find((event) => {
+          const from = canonicalAddress(event.from_address ?? event.fromAddress ?? '').toLowerCase();
+          const firstData = event.data?.[0] ?? '';
+          return from === factory && firstData.startsWith('0x');
+        });
+        collectionAddress = canonicalAddress(factoryEvent?.data?.[0] ?? '');
+      } catch {
+        // Receipt parsing can fail on some wallet/provider combinations.
+      }
+
+      if (!collectionAddress) {
+        for (let i = 0; i < 8; i += 1) {
+          collectionAddress = await resolveCollectionFromFactoryFallback(
+            provider,
+            env.NEXT_PUBLIC_FACTORY_ADDRESS,
+            session.address,
+          );
+          if (collectionAddress) break;
+          await sleep(1500);
+        }
+      }
+
+      return {
+        txHash: tx.hash,
+        collectionAddress,
+        input,
+      };
+    })(),
   };
 }
 
-export async function mintCollection(collectionAddress: string, quantity: number) {
+export async function mintCollection(collectionAddress: string, quantity: number): Promise<SubmittedMint> {
   if (!env.NEXT_PUBLIC_STRK_ADDRESS) {
     throw new Error('NEXT_PUBLIC_STRK_ADDRESS is missing.');
   }
@@ -274,11 +300,13 @@ export async function mintCollection(collectionAddress: string, quantity: number
   };
 
   const tx = await session.execute([approveCall, mintCall], { sponsored: true });
-  await tx.wait();
 
   return {
     txHash: tx.hash,
-    collectionAddress: normalizedCollectionAddress,
-    quantity,
+    confirmed: tx.wait().then(() => ({
+      txHash: tx.hash,
+      collectionAddress: normalizedCollectionAddress,
+      quantity,
+    })),
   };
 }

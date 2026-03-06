@@ -5,6 +5,7 @@ import { getPinataAlias } from '~~/lib/pinata/alias-store';
 import { ipfsGatewayUrl } from '~~/lib/pinata/server';
 import { getNftCollectionByAddress, getNftLaunchpadMeta, listNftCollections, upsertNftCollections, upsertNftLaunchpadMeta } from '~~/lib/storage/market-store';
 import { canonicalAddress } from '~~/lib/starknet/address';
+import { getServerRpcUrl } from '~~/lib/starknet/rpc';
 
 export type LaunchCollection = {
   index: number;
@@ -27,8 +28,6 @@ export type LaunchpadData = {
   mintFeeStrk: string;
   factoryAddress: string;
 };
-
-const DEFAULT_RPC = 'https://starknet-mainnet-rpc.publicnode.com';
 
 function toBigInt(value: string) {
   return BigInt(value);
@@ -124,11 +123,14 @@ async function resolveCollectionImage(metadataUri: string, contractUri: string, 
 }
 
 async function call(provider: RpcProvider, contractAddress: string, entrypoint: string, calldata: string[] = []) {
-  return provider.callContract({
-    contractAddress,
-    entrypoint,
-    calldata,
-  });
+  return provider.callContract(
+    {
+      contractAddress,
+      entrypoint,
+      calldata,
+    },
+    'latest',
+  );
 }
 
 async function fetchCollectionByAddressWithProvider(
@@ -193,7 +195,7 @@ export async function fetchCollectionByAddress(address: string): Promise<LaunchC
       imageUrl: proxiedImageUrl(cached.image_url),
     };
   }
-  const rpc = env.NEXT_PUBLIC_STARKNET_RPC || DEFAULT_RPC;
+  const rpc = getServerRpcUrl();
   const provider = new RpcProvider({ nodeUrl: rpc });
   return fetchCollectionByAddressWithProvider(provider, address);
 }
@@ -209,41 +211,61 @@ export async function fetchLaunchpadData(): Promise<LaunchpadData> {
     };
   }
 
-  const rpc = env.NEXT_PUBLIC_STARKNET_RPC || DEFAULT_RPC;
-  const provider = new RpcProvider({ nodeUrl: rpc });
   const cachedCollections = await listNftCollections(1000);
   const cachedMeta = await getNftLaunchpadMeta(factoryAddress);
+  return {
+    collections: cachedCollections.map((row) => ({
+      index: row.idx,
+      address: canonicalAddress(row.collection_address),
+      name: row.name,
+      symbol: row.symbol,
+      creator: canonicalAddress(row.creator),
+      model: row.model,
+      mintPriceStrk: row.mint_price_strk,
+      minted: row.minted,
+      maxSupply: row.max_supply,
+      progressPct: row.progress_pct,
+      baseUri: row.base_uri,
+      imageUrl: proxiedImageUrl(row.image_url),
+    })),
+    deployFeeStrk: cachedMeta?.deploy_fee_strk || '0',
+    mintFeeStrk: cachedMeta?.mint_fee_strk || '0',
+    factoryAddress: canonicalAddress(factoryAddress),
+  };
+}
 
-  if (cachedCollections.length > 0 && cachedMeta) {
-    void (async () => {
-      try {
-        await syncLaunchpadFromChain(provider, factoryAddress);
-      } catch {
-        // background sync best effort
-      }
-    })();
+export async function fetchLaunchpadMeta() {
+  const factoryAddress = env.NEXT_PUBLIC_FACTORY_ADDRESS;
+  if (!factoryAddress) {
+    return { deployFeeStrk: '0', mintFeeStrk: '0', factoryAddress: '' };
+  }
+
+  const cachedMeta = await getNftLaunchpadMeta(factoryAddress);
+  if (cachedMeta) {
     return {
-      collections: cachedCollections.map((row) => ({
-        index: row.idx,
-        address: canonicalAddress(row.collection_address),
-        name: row.name,
-        symbol: row.symbol,
-        creator: canonicalAddress(row.creator),
-        model: row.model,
-        mintPriceStrk: row.mint_price_strk,
-        minted: row.minted,
-        maxSupply: row.max_supply,
-        progressPct: row.progress_pct,
-        baseUri: row.base_uri,
-        imageUrl: proxiedImageUrl(row.image_url),
-      })),
       deployFeeStrk: cachedMeta.deploy_fee_strk,
       mintFeeStrk: cachedMeta.mint_fee_strk,
       factoryAddress: canonicalAddress(factoryAddress),
     };
   }
 
-  return syncLaunchpadFromChain(provider, factoryAddress);
+  const provider = new RpcProvider({ nodeUrl: getServerRpcUrl() });
+  const [deployFeeRaw, mintFeeRaw] = await Promise.all([
+    call(provider, factoryAddress, 'deploy_fee'),
+    call(provider, factoryAddress, 'mint_fee_per_mint'),
+  ]);
+  const payload = {
+    deployFeeStrk: formatStrk(parseU256(deployFeeRaw[0], deployFeeRaw[1])),
+    mintFeeStrk: formatStrk(parseU256(mintFeeRaw[0], mintFeeRaw[1])),
+    factoryAddress: canonicalAddress(factoryAddress),
+  };
+  await upsertNftLaunchpadMeta({
+    factory_address: factoryAddress,
+    deploy_fee_strk: payload.deployFeeStrk,
+    mint_fee_strk: payload.mintFeeStrk,
+    collection_count: 0,
+  });
+  return payload;
 }
 
 async function syncLaunchpadFromChain(provider: RpcProvider, factoryAddress: string): Promise<LaunchpadData> {

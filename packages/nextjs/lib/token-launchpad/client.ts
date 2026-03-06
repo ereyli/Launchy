@@ -3,10 +3,9 @@
 import { CallData, RpcProvider, cairo, hash, shortString, type Call } from 'starknet';
 import { env } from '~~/lib/config';
 import { canonicalAddress, sameAddress } from '~~/lib/starknet/address';
+import { CLIENT_RPC_PROXY_PATH } from '~~/lib/starknet/rpc';
 import { requireWalletSession } from '~~/lib/starknet/wallet-session';
 import type { CreateAndLaunchTokenInput, CreateTokenInput, LaunchOnEkuboInput } from '~~/lib/token-launchpad/types';
-
-const DEFAULT_RPC = 'https://starknet-mainnet-rpc.publicnode.com';
 const TOKEN_DECIMALS = 18n;
 const EKUBO_TICK_BASE = 1.000001;
 const DEFAULT_EKUBO_TICK_SPACING = 5982;
@@ -14,7 +13,7 @@ const DEFAULT_EKUBO_FEE = '1020847100762815390390123822295304634';
 const DEFAULT_EKUBO_BOUND = 88712960;
 
 function getReadProvider() {
-  return new RpcProvider({ nodeUrl: env.NEXT_PUBLIC_STARKNET_RPC || DEFAULT_RPC });
+  return new RpcProvider({ nodeUrl: CLIENT_RPC_PROXY_PATH });
 }
 
 function feltText(text: string, field: string) {
@@ -231,6 +230,28 @@ async function runBootstrapBuy(params: {
   return tx.hash;
 }
 
+export type SubmittedTokenCreateAndLaunch = {
+  txHash: string;
+  confirmed: Promise<{
+    txHash: string;
+    bootstrapSwapTxHash: string;
+    tokenAddress: string;
+    estimatedStrkNeeded: string;
+    platformFeeStrk: string;
+    launchPriceStrkPerToken: string;
+    input: CreateAndLaunchTokenInput;
+  }>;
+};
+
+export type SubmittedTokenLaunch = {
+  txHash: string;
+  tokenAddress: string;
+  confirmed: Promise<{
+    txHash: string;
+    tokenAddress: string;
+  }>;
+};
+
 async function getFactoryFeeConfig(provider: RpcProvider) {
   if (!env.NEXT_PUBLIC_TOKEN_FACTORY_ADDRESS) {
     throw new Error('NEXT_PUBLIC_TOKEN_FACTORY_ADDRESS is missing.');
@@ -316,7 +337,7 @@ export async function createMemecoin(input: CreateTokenInput) {
   };
 }
 
-export async function createAndLaunchMemecoin(input: CreateAndLaunchTokenInput) {
+export async function createAndLaunchMemecoin(input: CreateAndLaunchTokenInput): Promise<SubmittedTokenCreateAndLaunch> {
   if (!env.NEXT_PUBLIC_TOKEN_FACTORY_ADDRESS) {
     throw new Error('NEXT_PUBLIC_TOKEN_FACTORY_ADDRESS is missing.');
   }
@@ -470,22 +491,26 @@ export async function createAndLaunchMemecoin(input: CreateAndLaunchTokenInput) 
     [...approvals, createAndLaunchCall, ...(firstBuyCall ? [firstBuyCall] : [])],
     { sponsored: true },
   );
-  await tx.wait();
-
-  const tokenAddress = await resolveCreatedTokenAddress(provider, tx.hash, env.NEXT_PUBLIC_TOKEN_FACTORY_ADDRESS);
 
   return {
     txHash: tx.hash,
-    bootstrapSwapTxHash: '',
-    tokenAddress,
-    estimatedStrkNeeded: (ownerBuyQuoteWei / 10n ** 18n).toString(),
-    platformFeeStrk: (deployFeeWei / 10n ** 18n).toString(),
-    launchPriceStrkPerToken: priceParams.priceStrkPerToken.toString(),
-    input,
+    confirmed: (async () => {
+      await tx.wait();
+      const tokenAddress = await resolveCreatedTokenAddress(provider, tx.hash, env.NEXT_PUBLIC_TOKEN_FACTORY_ADDRESS);
+      return {
+        txHash: tx.hash,
+        bootstrapSwapTxHash: '',
+        tokenAddress,
+        estimatedStrkNeeded: (ownerBuyQuoteWei / 10n ** 18n).toString(),
+        platformFeeStrk: (deployFeeWei / 10n ** 18n).toString(),
+        launchPriceStrkPerToken: priceParams.priceStrkPerToken.toString(),
+        input,
+      };
+    })(),
   };
 }
 
-export async function launchOnEkubo(input: LaunchOnEkuboInput) {
+export async function launchOnEkubo(input: LaunchOnEkuboInput): Promise<SubmittedTokenLaunch> {
   if (!env.NEXT_PUBLIC_TOKEN_FACTORY_ADDRESS) {
     throw new Error('NEXT_PUBLIC_TOKEN_FACTORY_ADDRESS is missing.');
   }
@@ -567,8 +592,14 @@ export async function launchOnEkubo(input: LaunchOnEkuboInput) {
   calls.push(launchCall);
 
   const tx = await session.execute(calls, { sponsored: true });
-  await tx.wait();
-  return { txHash: tx.hash, tokenAddress: input.tokenAddress };
+  return {
+    txHash: tx.hash,
+    tokenAddress: input.tokenAddress,
+    confirmed: tx.wait().then(() => ({
+      txHash: tx.hash,
+      tokenAddress: input.tokenAddress,
+    })),
+  };
 }
 
 export async function withdrawCreatorFees(tokenAddress: string, recipient: string) {

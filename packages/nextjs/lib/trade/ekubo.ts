@@ -2,6 +2,7 @@
 
 import { RpcProvider } from 'starknet';
 import { env } from '~~/lib/config';
+import { CLIENT_RPC_PROXY_PATH } from '~~/lib/starknet/rpc';
 import { requireWalletSession } from '~~/lib/starknet/wallet-session';
 
 type TradeSide = 'buy' | 'sell';
@@ -33,12 +34,20 @@ export type EkuboQuoteResult = {
   netInput: string;
 };
 
+export type SubmittedTrade = {
+  txHash: string;
+  outputAmountFormatted: string;
+  inputAmountFormatted: string;
+  mode: 'ekubo_fee_router';
+  confirmed: Promise<void>;
+};
+
 let rpcProvider: RpcProvider | null = null;
 
 function getRpcProvider() {
   if (!rpcProvider) {
     rpcProvider = new RpcProvider({
-      nodeUrl: env.NEXT_PUBLIC_STARKNET_RPC || 'https://starknet-mainnet-rpc.publicnode.com',
+      nodeUrl: CLIENT_RPC_PROXY_PATH,
     });
   }
   return rpcProvider;
@@ -105,21 +114,24 @@ export async function quoteEkuboTrade(input: EkuboQuoteInput): Promise<EkuboQuot
   const tokenOutAddress = input.side === 'buy' ? input.tokenAddress : input.quoteTokenAddress;
   const extension = input.poolKey.extension || '0x0';
 
-  const res = await getRpcProvider().callContract({
-    contractAddress: feeRouterAddress,
-    entrypoint: 'quote_exact_input',
-    calldata: [
-      input.poolKey.token0,
-      input.poolKey.token1,
-      input.poolKey.fee,
-      input.poolKey.tickSpacing,
-      extension,
-      tokenInAddress,
-      amountParts.low,
-      amountParts.high,
-      `0x${slippageBps.toString(16)}`,
-    ],
-  });
+  const res = await getRpcProvider().callContract(
+    {
+      contractAddress: feeRouterAddress,
+      entrypoint: 'quote_exact_input',
+      calldata: [
+        input.poolKey.token0,
+        input.poolKey.token1,
+        input.poolKey.fee,
+        input.poolKey.tickSpacing,
+        extension,
+        tokenInAddress,
+        amountParts.low,
+        amountParts.high,
+        `0x${slippageBps.toString(16)}`,
+      ],
+    },
+    'latest',
+  );
 
   if (!Array.isArray(res) || res.length < 8) {
     throw new Error('Invalid quote response.');
@@ -144,20 +156,26 @@ export async function quoteEkuboTrade(input: EkuboQuoteInput): Promise<EkuboQuot
 export async function readTokenBalance(tokenAddress: string, owner: string) {
   const provider = getRpcProvider();
   try {
-    const words = await provider.callContract({
-      contractAddress: tokenAddress,
-      entrypoint: 'balance_of',
-      calldata: [owner],
-    });
+    const words = await provider.callContract(
+      {
+        contractAddress: tokenAddress,
+        entrypoint: 'balance_of',
+        calldata: [owner],
+      },
+      'latest',
+    );
     const wei = fromU256Words(words, 0);
     return weiToDecimalString(wei.toString());
   } catch {
     try {
-      const words = await provider.callContract({
-        contractAddress: tokenAddress,
-        entrypoint: 'balanceOf',
-        calldata: [owner],
-      });
+      const words = await provider.callContract(
+        {
+          contractAddress: tokenAddress,
+          entrypoint: 'balanceOf',
+          calldata: [owner],
+        },
+        'latest',
+      );
       const wei = fromU256Words(words, 0);
       return weiToDecimalString(wei.toString());
     } catch {
@@ -169,19 +187,25 @@ export async function readTokenBalance(tokenAddress: string, owner: string) {
 export async function readTokenAllowance(tokenAddress: string, owner: string, spender: string) {
   const provider = getRpcProvider();
   try {
-    const words = await provider.callContract({
-      contractAddress: tokenAddress,
-      entrypoint: 'allowance',
-      calldata: [owner, spender],
-    });
+    const words = await provider.callContract(
+      {
+        contractAddress: tokenAddress,
+        entrypoint: 'allowance',
+        calldata: [owner, spender],
+      },
+      'latest',
+    );
     return fromU256Words(words, 0);
   } catch {
     try {
-      const words = await provider.callContract({
-        contractAddress: tokenAddress,
-        entrypoint: 'allowance_of',
-        calldata: [owner, spender],
-      });
+      const words = await provider.callContract(
+        {
+          contractAddress: tokenAddress,
+          entrypoint: 'allowance_of',
+          calldata: [owner, spender],
+        },
+        'latest',
+      );
       return fromU256Words(words, 0);
     } catch {
       return 0n;
@@ -189,7 +213,7 @@ export async function readTokenAllowance(tokenAddress: string, owner: string, sp
   }
 }
 
-export async function executeEkuboTrade(input: EkuboQuoteInput) {
+export async function executeEkuboTrade(input: EkuboQuoteInput): Promise<SubmittedTrade> {
   try {
     const session = requireWalletSession();
     if (!session.address) {
@@ -249,13 +273,13 @@ export async function executeEkuboTrade(input: EkuboQuoteInput) {
     ];
 
     const tx = await session.execute(calls, { sponsored: true });
-    await tx.wait();
 
     return {
       txHash: tx.hash,
       outputAmountFormatted: quoted ? weiToDecimalString(quoted.outputAmount) : 'Submitted',
       inputAmountFormatted: weiToDecimalString(amountWei.toString()),
       mode: 'ekubo_fee_router' as const,
+      confirmed: tx.wait(),
     };
   } catch (error) {
     throw new Error(normalizeTradeError(error));

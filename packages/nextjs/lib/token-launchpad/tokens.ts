@@ -3,14 +3,13 @@ import { proxiedImageUrl } from '~~/lib/assets/image-url';
 import { env } from '~~/lib/config';
 import { getTokenInitialMarketCapUsdMap, listTokenLaunchRows, upsertTokenLaunchRow } from '~~/lib/storage/market-store';
 import { canonicalAddress } from '~~/lib/starknet/address';
+import { getServerRpcUrl } from '~~/lib/starknet/rpc';
 import { getTokenProfile, getTokenProfilesMap } from '~~/lib/token-launchpad/profile-store';
 import type { TokenLaunchRecord } from '~~/lib/token-launchpad/types';
-
-const DEFAULT_RPC = 'https://starknet-mainnet-rpc.publicnode.com';
 const TOKEN_DECIMALS = 18n;
 
 function getProvider() {
-  return new RpcProvider({ nodeUrl: env.NEXT_PUBLIC_STARKNET_RPC || DEFAULT_RPC });
+  return new RpcProvider({ nodeUrl: getServerRpcUrl() });
 }
 
 function u256ToBigInt(lowHex: string, highHex: string) {
@@ -47,11 +46,14 @@ async function readContract(
   entrypoint: string,
   calldata: string[] = [],
 ) {
-  return provider.callContract({
-    contractAddress,
-    entrypoint,
-    calldata,
-  });
+  return provider.callContract(
+    {
+      contractAddress,
+      entrypoint,
+      calldata,
+    },
+    'latest',
+  );
 }
 
 type CreatedEventAddress = {
@@ -149,82 +151,40 @@ export async function fetchTokenByAddress(address: string): Promise<TokenLaunchR
 }
 
 export async function fetchLatestTokenLaunches(limit = 24): Promise<TokenLaunchRecord[]> {
-  if (!env.NEXT_PUBLIC_TOKEN_FACTORY_ADDRESS) return [];
   const cached = await listTokenLaunchRows(limit);
   const initialMcs = await getTokenInitialMarketCapUsdMap();
   const profiles = await getTokenProfilesMap();
-  if (cached.length >= Math.max(4, Math.floor(limit * 0.7))) {
-    return cached.map((row) => {
-      const profile = profiles[row.token_address.toLowerCase()];
-      return {
-        address: normalizeHexAddress(row.token_address),
-        owner: normalizeHexAddress(row.owner),
-        name: row.name,
-        symbol: row.symbol,
-        logoImageUrl: proxiedImageUrl(profile?.imageUrl),
-        logoImageCid: profile?.imageCid,
-        initialMarketCapUsd: initialMcs[row.token_address.toLowerCase()],
-        totalSupply: BigInt(row.total_supply),
-        totalSupplyFormatted: row.total_supply_formatted,
-        isLaunched: Boolean(row.is_launched),
-        launchData: row.quote_token
-          ? {
-              quoteToken: normalizeHexAddress(row.quote_token),
-              quoteAmount: 0n,
-              quoteAmountFormatted: '0',
-              antiBotSeconds: 0,
-              maxBuyBps: 1000,
-              fee: '0x0',
-              tickSpacing: '0',
-              startPriceMag: '0',
-              startPriceIsNegative: false,
-              bound: '0',
-              launcher: normalizeHexAddress(row.owner),
-              launchedAt: 0,
-            }
-          : undefined,
-        createdTxHash: row.created_tx_hash ?? undefined,
-        createdAtBlock: row.created_at_block ?? undefined,
-      };
-    });
-  }
-
-  const events = await fetchCreatedTokenAddresses(limit);
-  const records = await Promise.all(
-    events.map(async (row) => {
-      try {
-        const token = await fetchTokenByAddress(row.address);
-        const profile = profiles[row.address.toLowerCase()];
-        return {
-          ...token,
-          logoImageUrl: proxiedImageUrl(token.logoImageUrl || profile?.imageUrl),
-          logoImageCid: token.logoImageCid || profile?.imageCid,
-          createdTxHash: row.txHash,
-          createdAtBlock: row.blockNumber,
-        };
-      } catch {
-        return null;
-      }
-    }),
-  );
-
-  const validRecords: TokenLaunchRecord[] = [];
-  for (const item of records) {
-    if (!item) continue;
-    await upsertTokenLaunchRow({
-      token_address: item.address,
-      owner: item.owner,
-      name: item.name,
-      symbol: item.symbol,
-      total_supply: item.totalSupply.toString(),
-      total_supply_formatted: item.totalSupplyFormatted,
-      is_launched: item.isLaunched,
-      quote_token: item.launchData?.quoteToken ?? null,
-      created_tx_hash: item.createdTxHash ?? null,
-      created_at_block: item.createdAtBlock ?? null,
-    });
-    item.initialMarketCapUsd = initialMcs[item.address.toLowerCase()];
-    validRecords.push(item);
-  }
-  return validRecords;
+  return cached.map((row) => {
+    const profile = profiles[row.token_address.toLowerCase()];
+    return {
+      address: normalizeHexAddress(row.token_address),
+      owner: normalizeHexAddress(row.owner),
+      name: row.name,
+      symbol: row.symbol,
+      logoImageUrl: proxiedImageUrl(profile?.imageUrl),
+      logoImageCid: profile?.imageCid,
+      initialMarketCapUsd: initialMcs[row.token_address.toLowerCase()],
+      totalSupply: BigInt(row.total_supply),
+      totalSupplyFormatted: row.total_supply_formatted,
+      isLaunched: Boolean(row.is_launched),
+      launchData: row.quote_token
+        ? {
+            quoteToken: normalizeHexAddress(row.quote_token),
+            quoteAmount: 0n,
+            quoteAmountFormatted: '0',
+            antiBotSeconds: 0,
+            maxBuyBps: 1000,
+            fee: '0x0',
+            tickSpacing: '0',
+            startPriceMag: '0',
+            startPriceIsNegative: false,
+            bound: '0',
+            launcher: normalizeHexAddress(row.owner),
+            launchedAt: 0,
+          }
+        : undefined,
+      createdTxHash: row.created_tx_hash ?? undefined,
+      createdAtBlock: row.created_at_block ?? undefined,
+    };
+  });
 }

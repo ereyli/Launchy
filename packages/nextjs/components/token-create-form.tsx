@@ -2,6 +2,7 @@
 
 import { FormEvent, useEffect, useMemo, useState } from 'react';
 import { CopyButton } from '~~/components/copy-button';
+import { TransactionFeedbackCard } from '~~/components/transaction-feedback-card';
 import { uploadTokenLogo } from '~~/lib/pinata/client';
 import { createAndLaunchMemecoin } from '~~/lib/token-launchpad/client';
 import { env } from '~~/lib/config';
@@ -34,6 +35,7 @@ export function TokenCreateForm() {
   const [isUploadingLogo, setIsUploadingLogo] = useState(false);
   const [logoUploadError, setLogoUploadError] = useState('');
   const [status, setStatus] = useState('');
+  const [feedback, setFeedback] = useState<{ variant: 'pending' | 'success' | 'error'; title: string; description: string } | null>(null);
   const [isDeploying, setIsDeploying] = useState(false);
   const [deployResult, setDeployResult] = useState<DeployResult | null>(null);
 
@@ -125,10 +127,6 @@ export function TokenCreateForm() {
       setStatus('Token factory is not configured. Set NEXT_PUBLIC_TOKEN_FACTORY_ADDRESS.');
       return;
     }
-    if (!env.NEXT_PUBLIC_STARKNET_RPC) {
-      setStatus('RPC is not configured. Set NEXT_PUBLIC_STARKNET_RPC.');
-      return;
-    }
     const usd = Number.parseFloat(startingMarketCapUsd || '0');
     const rate = strkUsdRate;
     if (!Number.isFinite(usd) || usd < 5000) {
@@ -141,6 +139,7 @@ export function TokenCreateForm() {
     }
     setIsDeploying(true);
     setStatus('Preparing launch transaction...');
+    setFeedback(null);
     setDeployResult(null);
     try {
       if (logoFile && !uploadedLogoCid) {
@@ -156,13 +155,20 @@ export function TokenCreateForm() {
         startingMarketCapStrk,
         quoteToken: env.NEXT_PUBLIC_STRK_ADDRESS || '0x04718f5a0fc34cc1af16a1cdee98ffb20c31f5cd61d6ab07201858f4287c938d',
       });
-      if (uploadedLogoCid && res.tokenAddress) {
+      setStatus('Transaction submitted. Waiting for confirmation...');
+      setFeedback({
+        variant: 'pending',
+        title: 'Token launch submitted',
+        description: 'The token contract and launch transaction have been sent to the network. Waiting for confirmation.',
+      });
+      void res.confirmed.then(async (confirmed) => {
+      if (uploadedLogoCid && confirmed.tokenAddress) {
         const profileRes = await fetch('/api/token/profile', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            tokenAddress: res.tokenAddress,
-            txHash: res.txHash,
+            tokenAddress: confirmed.tokenAddress,
+            txHash: confirmed.txHash,
             imageCid: uploadedLogoCid,
             name,
             symbol,
@@ -177,7 +183,7 @@ export function TokenCreateForm() {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            txHash: res.txHash,
+            txHash: confirmed.txHash,
             imageCid: uploadedLogoCid,
             name,
             symbol,
@@ -194,8 +200,8 @@ export function TokenCreateForm() {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            tokenAddress: res.tokenAddress,
-            txHash: res.txHash,
+            tokenAddress: confirmed.tokenAddress,
+            txHash: confirmed.txHash,
             startingMarketCapUsd,
           }),
         });
@@ -205,8 +211,8 @@ export function TokenCreateForm() {
         }
       }
       setDeployResult({
-        txHash: res.txHash,
-        tokenAddress: res.tokenAddress,
+        txHash: confirmed.txHash,
+        tokenAddress: confirmed.tokenAddress,
         name,
         symbol,
         initialSupply,
@@ -214,8 +220,26 @@ export function TokenCreateForm() {
         estimatedOwnerBuyStrk: estimatedQuoteStrk,
       });
       setStatus('');
+      setFeedback({
+        variant: 'success',
+        title: 'Token launch completed',
+        description: 'The token has been deployed and the trade page is now ready.',
+      });
+      }).catch((error) => {
+        setStatus(error instanceof Error ? error.message : 'Token confirmation failed');
+        setFeedback({
+          variant: 'error',
+          title: 'Token launch failed',
+          description: error instanceof Error ? error.message : 'Token confirmation failed',
+        });
+      });
     } catch (error) {
       setStatus(error instanceof Error ? error.message : 'Unknown error');
+      setFeedback({
+        variant: 'error',
+        title: 'Token launch could not start',
+        description: error instanceof Error ? error.message : 'Unknown error',
+      });
     } finally {
       setIsDeploying(false);
     }
@@ -337,6 +361,12 @@ export function TokenCreateForm() {
           {isDeploying ? 'Deploying...' : 'Create and Launch'}
         </button>
         {status ? <small className="muted">{status}</small> : null}
+        <TransactionFeedbackCard
+          open={Boolean(feedback)}
+          variant={feedback?.variant || 'pending'}
+          title={feedback?.title || ''}
+          description={feedback?.description || ''}
+        />
       </form>
 
       {isDeploying ? (
@@ -373,22 +403,9 @@ export function TokenCreateForm() {
               <strong className="mono">{tokenAddressLabel}</strong>
               {deployResult.tokenAddress ? <CopyButton value={tokenAddressLabel} /> : null}
             </div>
-            <div className="deploy-address-row">
-              <span className="muted">Tx</span>
-              <strong className="mono">{deployResult.txHash.slice(0, 18)}...</strong>
-              <CopyButton value={deployResult.txHash} />
-            </div>
             <div className="deploy-result-actions">
               <a href={tokenPath} className="deploy-result-link">
                 <button type="button">Open Trade Page</button>
-              </a>
-              <a
-                href={`https://voyager.online/tx/${deployResult.txHash}`}
-                target="_blank"
-                rel="noreferrer"
-                className="deploy-result-link"
-              >
-                <button type="button" className="ghost-button">View transaction</button>
               </a>
               <button type="button" className="ghost-button" onClick={dismissResult}>
                 Create another token

@@ -3,6 +3,7 @@ import { RpcProvider, hash } from 'starknet';
 import { ipfsGatewayUrl } from '~~/lib/pinata/server';
 import { assertCidLike, assertRateLimit, assertSameOrigin, RouteGuardError } from '~~/lib/server/mutation-guard';
 import { canonicalAddress } from '~~/lib/starknet/address';
+import { getServerRpcUrl } from '~~/lib/starknet/rpc';
 import { saveTokenProfile } from '~~/lib/token-launchpad/profile-store';
 import { getTokenLaunchRow, getTokenProfileRow } from '~~/lib/storage/market-store';
 
@@ -14,13 +15,11 @@ type Body = {
   symbol?: string;
 };
 
-const DEFAULT_RPC = 'https://starknet-mainnet-rpc.publicnode.com';
-
 async function resolveTokenAddressFromTx(txHash: string) {
   const factoryAddress = process.env.NEXT_PUBLIC_TOKEN_FACTORY_ADDRESS || '';
   if (!factoryAddress) return '';
   const provider = new RpcProvider({
-    nodeUrl: process.env.NEXT_PUBLIC_STARKNET_RPC || DEFAULT_RPC,
+    nodeUrl: getServerRpcUrl(),
   });
   const createdSelector = hash.getSelectorFromName('MemecoinCreated').toLowerCase();
   const factory = canonicalAddress(factoryAddress).toLowerCase();

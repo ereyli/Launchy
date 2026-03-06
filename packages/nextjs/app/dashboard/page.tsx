@@ -1,12 +1,12 @@
 import Link from 'next/link';
-import { fetchLaunchpadData } from '~~/lib/launchpad/collections';
+import { fetchLaunchpadData, fetchLaunchpadMeta } from '~~/lib/launchpad/collections';
 import { formatDecimalDots, formatIntegerDots } from '~~/lib/format';
 import { fetchLatestTokenLaunches } from '~~/lib/token-launchpad/tokens';
 
 export const dynamic = 'force-dynamic';
 
 export default async function DashboardPage() {
-  const [nftData, tokens] = await Promise.all([fetchLaunchpadData(), fetchLatestTokenLaunches(120)]);
+  const [nftData, launchpadMeta, tokens] = await Promise.all([fetchLaunchpadData(), fetchLaunchpadMeta(), fetchLatestTokenLaunches(120)]);
   const totalCollections = nftData.collections.length;
   const totalMints = nftData.collections.reduce((acc, item) => acc + item.minted, 0);
   const listedTokens = tokens.filter((item) => item.isLaunched).length;
@@ -34,9 +34,9 @@ export default async function DashboardPage() {
       <section className="panel card-soft">
         <h3 className="card-title">Factory configuration</h3>
         <ul className="list">
-          <li>Factory address: {nftData.factoryAddress || 'Not configured'}</li>
-          <li>Deploy fee: {formatDecimalDots(nftData.deployFeeStrk)} STRK</li>
-          <li>Mint fee: {formatDecimalDots(nftData.mintFeeStrk)} STRK</li>
+          <li>Factory address: {launchpadMeta.factoryAddress || 'Not configured'}</li>
+          <li>Deploy fee: {formatDecimalDots(launchpadMeta.deployFeeStrk)} STRK</li>
+          <li>Mint fee: {formatDecimalDots(launchpadMeta.mintFeeStrk)} STRK</li>
         </ul>
       </section>
     </main>

@@ -2,6 +2,7 @@
 
 import { FormEvent, useEffect, useMemo, useState } from 'react';
 import { CopyButton } from '~~/components/copy-button';
+import { TransactionFeedbackCard } from '~~/components/transaction-feedback-card';
 import { env } from '~~/lib/config';
 import { formatDecimalDots, formatIntegerDots, normalizeIntegerInput } from '~~/lib/format';
 import { createCollection } from '~~/lib/launchpad/client';
@@ -40,6 +41,7 @@ const initialState: State = {
 export function CreateForm({ deployFeeStrk, mintFeeStrk }: { deployFeeStrk: string; mintFeeStrk: string }) {
   const [state, setState] = useState<State>(initialState);
   const [status, setStatus] = useState<string>('');
+  const [feedback, setFeedback] = useState<{ variant: 'pending' | 'success' | 'error'; title: string; description: string } | null>(null);
   const [uploadedImage, setUploadedImage] = useState<PinataUploadResult | null>(null);
   const [isUploadingImage, setIsUploadingImage] = useState(false);
   const [imageUploadError, setImageUploadError] = useState('');
@@ -103,13 +105,11 @@ export function CreateForm({ deployFeeStrk, mintFeeStrk }: { deployFeeStrk: stri
   async function onSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setIsDeploying(true);
+    setFeedback(null);
 
     try {
       if (!env.NEXT_PUBLIC_FACTORY_ADDRESS) {
         throw new Error('NFT factory is not configured. Set NEXT_PUBLIC_FACTORY_ADDRESS.');
-      }
-      if (!env.NEXT_PUBLIC_STARKNET_RPC) {
-        throw new Error('RPC is not configured. Set NEXT_PUBLIC_STARKNET_RPC.');
       }
       if (!state.imageFile) {
         throw new Error('Collection image is required.');
@@ -139,16 +139,23 @@ export function CreateForm({ deployFeeStrk, mintFeeStrk }: { deployFeeStrk: stri
         metadataUri: uploadedImage.metadataIpfsUri,
         contractMetadataUri: uploadedImage.collectionMetadataIpfsUri,
       });
-      if (!res.collectionAddress) {
-        throw new Error('Transaction sent but collection address was not indexed yet. Check dashboard after a few seconds.');
-      }
-      {
-        const metaRes = await fetch('/api/nft/collection-meta', {
+      setStatus('Transaction submitted. Waiting for confirmation...');
+      setFeedback({
+        variant: 'pending',
+        title: 'Deployment submitted',
+        description: 'The NFT contract has been sent to the network. The collection address will be prepared after confirmation.',
+      });
+      void res.confirmed
+        .then(async (confirmed) => {
+          if (!confirmed.collectionAddress) {
+            throw new Error('Transaction confirmed but collection address was not indexed yet. Check dashboard after a few seconds.');
+          }
+          const metaRes = await fetch('/api/nft/collection-meta', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            collectionAddress: res.collectionAddress,
-            txHash: res.txHash,
+            collectionAddress: confirmed.collectionAddress,
+            txHash: confirmed.txHash,
             name: state.name,
             symbol: state.symbol,
             model: state.isFreeMintModel ? 'free' : 'paid',
@@ -158,18 +165,36 @@ export function CreateForm({ deployFeeStrk, mintFeeStrk }: { deployFeeStrk: stri
             imageUrl: uploadedImage.imageGatewayUrl,
           }),
         });
-        if (!metaRes.ok) {
-          const payload = await metaRes.json().catch(() => ({}));
-          throw new Error(payload?.error || 'Collection metadata save failed.');
-        }
-      }
-      setDeployResult({
-        txHash: res.txHash,
-        collectionAddress: res.collectionAddress,
-      });
-      setStatus('');
+          if (!metaRes.ok) {
+            const payload = await metaRes.json().catch(() => ({}));
+            throw new Error(payload?.error || 'Collection metadata save failed.');
+          }
+          setDeployResult({
+            txHash: confirmed.txHash,
+            collectionAddress: confirmed.collectionAddress,
+          });
+          setStatus('');
+          setFeedback({
+            variant: 'success',
+            title: 'NFT deployed',
+            description: 'The collection is live and the mint page is ready to use.',
+          });
+        })
+        .catch((error) => {
+          setStatus(error instanceof Error ? error.message : 'Collection confirmation failed.');
+          setFeedback({
+            variant: 'error',
+            title: 'NFT deployment failed',
+            description: error instanceof Error ? error.message : 'Collection confirmation failed.',
+          });
+        });
     } catch (error) {
       setStatus(error instanceof Error ? error.message : 'Unknown error');
+      setFeedback({
+        variant: 'error',
+        title: 'NFT deployment could not start',
+        description: error instanceof Error ? error.message : 'Unknown error',
+      });
     } finally {
       setIsDeploying(false);
     }
@@ -204,11 +229,6 @@ export function CreateForm({ deployFeeStrk, mintFeeStrk }: { deployFeeStrk: stri
             <CopyButton value={collectionAddressLabel} />
           </div>
           <div className="deploy-address-row">
-            <span className="muted">Tx</span>
-            <strong className="mono">{deployResult.txHash.slice(0, 18)}...</strong>
-            <CopyButton value={deployResult.txHash} />
-          </div>
-          <div className="deploy-address-row">
             <span className="muted">Mint link</span>
             <strong className="mono">{mintPagePath}</strong>
             <CopyButton value={mintLink} />
@@ -216,9 +236,6 @@ export function CreateForm({ deployFeeStrk, mintFeeStrk }: { deployFeeStrk: stri
           <div className="deploy-result-actions">
             <a href={mintPagePath} className="deploy-result-link">
               <button type="button">Open Mint Page</button>
-            </a>
-            <a href={`https://voyager.online/tx/${deployResult.txHash}`} target="_blank" rel="noreferrer" className="deploy-result-link">
-              <button type="button" className="ghost-button">View transaction</button>
             </a>
             <button
               type="button"
@@ -384,6 +401,12 @@ export function CreateForm({ deployFeeStrk, mintFeeStrk }: { deployFeeStrk: stri
           {isDeploying ? 'Deploying...' : 'Deploy collection'}
         </button>
         {status ? <small className="muted">{status}</small> : null}
+        <TransactionFeedbackCard
+          open={Boolean(feedback)}
+          variant={feedback?.variant || 'pending'}
+          title={feedback?.title || ''}
+          description={feedback?.description || ''}
+        />
       </form>
 
       <aside className="panel card-soft form-ultra">

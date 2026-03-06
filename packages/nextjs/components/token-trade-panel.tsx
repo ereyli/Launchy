@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState, useSyncExternalStore } from 'react';
+import { TransactionFeedbackCard } from '~~/components/transaction-feedback-card';
 import { executeEkuboTrade, quoteEkuboTrade, readTokenBalance, type EkuboQuoteResult, type PoolKeyInput } from '~~/lib/trade/ekubo';
 import { formatDecimalDots } from '~~/lib/format';
 import { getWalletSessionSnapshot, subscribeWalletSession } from '~~/lib/starknet/wallet-session';
@@ -39,12 +40,12 @@ export function TokenTradePanel({
   const [amount, setAmount] = useState('1');
   const [slippage, setSlippage] = useState(1);
   const [status, setStatus] = useState('');
-  const [txHash, setTxHash] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [quote, setQuote] = useState<UiQuote | null>(null);
   const [loadingQuote, setLoadingQuote] = useState(false);
   const [fromBalance, setFromBalance] = useState('0');
   const [toBalance, setToBalance] = useState('0');
+  const [feedback, setFeedback] = useState<{ variant: 'pending' | 'success' | 'error'; title: string; description: string } | null>(null);
 
   const side: Side = fromAsset === 'quote' ? 'buy' : 'sell';
   const fromSymbol = useMemo(() => (fromAsset === 'quote' ? quoteTokenSymbol : tokenSymbol), [fromAsset, quoteTokenSymbol, tokenSymbol]);
@@ -64,7 +65,7 @@ export function TokenTradePanel({
     if (isSubmitting) return;
     setIsSubmitting(true);
     setStatus('Submitting trade transaction...');
-    setTxHash('');
+    setFeedback(null);
     try {
       const res = await executeEkuboTrade({
         side,
@@ -74,10 +75,44 @@ export function TokenTradePanel({
         slippage,
         poolKey,
       });
-      setTxHash(res.txHash);
-      setStatus('Success. Swap confirmed.');
+      setStatus('Transaction submitted. Waiting for confirmation...');
+      setFeedback({
+        variant: 'pending',
+        title: 'Swap submitted',
+        description: `${fromSymbol} -> ${toSymbol} has been sent to the network. Waiting for confirmation.`,
+      });
+      void res.confirmed
+        .then(async () => {
+          setStatus('Success. Swap confirmed.');
+          setFeedback({
+            variant: 'success',
+            title: 'Swap completed',
+            description: `${toSymbol} balance has been refreshed. The swap finished successfully.`,
+          });
+          if (wallet.connected && wallet.address) {
+            const [fromBal, toBal] = await Promise.all([
+              readTokenBalance(fromAddress, wallet.address),
+              readTokenBalance(toAddress, wallet.address),
+            ]);
+            setFromBalance(fromBal);
+            setToBalance(toBal);
+          }
+        })
+        .catch((error) => {
+          setStatus(error instanceof Error ? error.message : 'Trade confirmation failed');
+          setFeedback({
+            variant: 'error',
+            title: 'Swap failed',
+            description: error instanceof Error ? error.message : 'Trade confirmation failed',
+          });
+        });
     } catch (error) {
       setStatus(error instanceof Error ? error.message : 'Trade failed');
+      setFeedback({
+        variant: 'error',
+        title: 'Swap could not start',
+        description: error instanceof Error ? error.message : 'Trade failed',
+      });
     } finally {
       setIsSubmitting(false);
     }
@@ -86,7 +121,7 @@ export function TokenTradePanel({
   function flipDirection() {
     setFromAsset((prev) => (prev === 'quote' ? 'token' : 'quote'));
     setStatus('');
-    setTxHash('');
+    setFeedback(null);
   }
 
   useEffect(() => {
@@ -277,7 +312,7 @@ export function TokenTradePanel({
         {!wallet.connected ? (
           'Connect wallet first'
         ) : isSubmitting ? (
-          <span className="inline-row"><span className="button-spinner" />Confirming...</span>
+          <span className="inline-row"><span className="button-spinner" />Submitting...</span>
         ) : (
           `Swap ${fromSymbol} → ${toSymbol}`
         )}
@@ -285,9 +320,12 @@ export function TokenTradePanel({
 
       {quote && !hasExecutableQuote ? <small className="muted dex-status">No executable liquidity for this amount.</small> : null}
       {status ? <small className="muted dex-status">{status}</small> : null}
-      {txHash ? (
-        <a className="dex-tx-link" href={`https://voyager.online/tx/${txHash}`} target="_blank" rel="noreferrer">View trade tx on Voyager</a>
-      ) : null}
+      <TransactionFeedbackCard
+        open={Boolean(feedback)}
+        variant={feedback?.variant || 'pending'}
+        title={feedback?.title || ''}
+        description={feedback?.description || ''}
+      />
     </section>
   );
 }

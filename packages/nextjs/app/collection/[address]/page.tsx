@@ -3,7 +3,7 @@ import { MintForm } from '~~/components/mint-form';
 import { CopyButton } from '~~/components/copy-button';
 import { formatDecimalDots, formatIntegerDots } from '~~/lib/format';
 import { proxiedImageUrl } from '~~/lib/assets/image-url';
-import { fetchCollectionByAddress, fetchLaunchpadData } from '~~/lib/launchpad/collections';
+import { fetchCollectionByAddress, fetchLaunchpadMeta } from '~~/lib/launchpad/collections';
 import { getPinataAlias } from '~~/lib/pinata/alias-store';
 import { ipfsGatewayUrl } from '~~/lib/pinata/server';
 import { checksumAddress } from '~~/lib/starknet/address';
@@ -12,11 +12,11 @@ import { notFound } from 'next/navigation';
 export default async function CollectionPage({ params }: { params: Promise<{ address: string }> }) {
   const { address } = await params;
   let collection: Awaited<ReturnType<typeof fetchCollectionByAddress>>;
-  let launchpad: Awaited<ReturnType<typeof fetchLaunchpadData>>;
+  let launchpad: Awaited<ReturnType<typeof fetchLaunchpadMeta>>;
   try {
     [collection, launchpad] = await Promise.all([
       fetchCollectionByAddress(address),
-      fetchLaunchpadData(),
+      fetchLaunchpadMeta(),
     ]);
   } catch {
     notFound();

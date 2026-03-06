@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { RpcProvider } from 'starknet';
 import { env } from '~~/lib/config';
+import { getServerRpcUrl } from '~~/lib/starknet/rpc';
 import { canonicalAddress } from '~~/lib/starknet/address';
 
 function splitU256(value: bigint) {
@@ -48,26 +49,29 @@ export async function GET(req: NextRequest) {
     }
 
     const provider = new RpcProvider({
-      nodeUrl: env.NEXT_PUBLIC_STARKNET_RPC || 'https://starknet-mainnet-rpc.publicnode.com',
+      nodeUrl: getServerRpcUrl(),
     });
     const amountIn = BigInt(amountInRaw);
     const parts = splitU256(amountIn);
 
-    const res = await provider.callContract({
-      contractAddress: canonicalAddress(feeRouter),
-      entrypoint: 'quote_exact_input',
-      calldata: [
-        canonicalAddress(token0),
-        canonicalAddress(token1),
-        fee,
-        tickSpacing,
-        canonicalAddress(extension),
-        canonicalAddress(tokenIn),
-        parts.low,
-        parts.high,
-        `0x${BigInt(slippageBps).toString(16)}`,
-      ],
-    });
+    const res = await provider.callContract(
+      {
+        contractAddress: canonicalAddress(feeRouter),
+        entrypoint: 'quote_exact_input',
+        calldata: [
+          canonicalAddress(token0),
+          canonicalAddress(token1),
+          fee,
+          tickSpacing,
+          canonicalAddress(extension),
+          canonicalAddress(tokenIn),
+          parts.low,
+          parts.high,
+          `0x${BigInt(slippageBps).toString(16)}`,
+        ],
+      },
+      'latest',
+    );
 
     if (!Array.isArray(res) || res.length < 8) {
       return NextResponse.json({ error: 'Invalid quote response' }, { status: 502 });

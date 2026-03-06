@@ -1,6 +1,7 @@
 'use client';
 
 import { FormEvent, useMemo, useState } from 'react';
+import { TransactionFeedbackCard } from '~~/components/transaction-feedback-card';
 import { launchOnEkubo } from '~~/lib/token-launchpad/client';
 
 type Props = {
@@ -21,7 +22,7 @@ export function TokenLaunchWizard({ tokenAddress, strkAddress }: Props) {
   const [status, setStatus] = useState('');
   const [creatorAllocationPercent, setCreatorAllocationPercent] = useState(10);
   const maxBuyPercent = 10;
-  const [txHash, setTxHash] = useState('');
+  const [feedback, setFeedback] = useState<{ variant: 'pending' | 'success' | 'error'; title: string; description: string } | null>(null);
 
   const lpPercent = 100 - creatorAllocationPercent;
   const maxBuyBps = maxBuyPercent * 100;
@@ -37,7 +38,7 @@ export function TokenLaunchWizard({ tokenAddress, strkAddress }: Props) {
   async function submitLaunch(e: FormEvent) {
     e.preventDefault();
     setStatus('Submitting launch transaction...');
-    setTxHash('');
+    setFeedback(null);
     try {
       const res = await launchOnEkubo({
         tokenAddress,
@@ -51,10 +52,34 @@ export function TokenLaunchWizard({ tokenAddress, strkAddress }: Props) {
         startPriceIsNegative: DEFAULT_START_PRICE_IS_NEGATIVE,
         bound: DEFAULT_BOUND,
       });
-      setTxHash(res.txHash);
-      setStatus('');
+      setStatus('Transaction submitted. Waiting for confirmation...');
+      setFeedback({
+        variant: 'pending',
+        title: 'Launch submitted',
+        description: 'The Ekubo pool opening has been sent to the network. Waiting for confirmation.',
+      });
+      void res.confirmed.then(() => {
+        setStatus('');
+        setFeedback({
+          variant: 'success',
+          title: 'Token launched',
+          description: 'The Ekubo pool is active and the token is now tradable.',
+        });
+      }).catch((error) => {
+        setStatus(error instanceof Error ? error.message : 'Unknown error');
+        setFeedback({
+          variant: 'error',
+          title: 'Launch failed',
+          description: error instanceof Error ? error.message : 'Unknown error',
+        });
+      });
     } catch (error) {
       setStatus(error instanceof Error ? error.message : 'Unknown error');
+      setFeedback({
+        variant: 'error',
+        title: 'Launch could not start',
+        description: error instanceof Error ? error.message : 'Unknown error',
+      });
     }
   }
 
@@ -112,14 +137,12 @@ export function TokenLaunchWizard({ tokenAddress, strkAddress }: Props) {
       ) : null}
 
       {status ? <small className="muted">{status}</small> : null}
-      {txHash ? (
-        <div className="form-grid">
-          <small className="muted">Launch transaction sent successfully.</small>
-          <a href={`https://voyager.online/tx/${txHash}`} target="_blank" rel="noreferrer">
-            <button type="button" className="ghost-button">View launch tx</button>
-          </a>
-        </div>
-      ) : null}
+      <TransactionFeedbackCard
+        open={Boolean(feedback)}
+        variant={feedback?.variant || 'pending'}
+        title={feedback?.title || ''}
+        description={feedback?.description || ''}
+      />
     </form>
   );
 }

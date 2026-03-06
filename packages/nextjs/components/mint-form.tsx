@@ -1,6 +1,7 @@
 'use client';
 
 import { FormEvent, useMemo, useState } from 'react';
+import { TransactionFeedbackCard } from '~~/components/transaction-feedback-card';
 import { formatDecimalDots, formatIntegerDots } from '~~/lib/format';
 import { mintCollection } from '~~/lib/launchpad/client';
 
@@ -17,6 +18,7 @@ export function MintForm({
 }) {
   const [quantity, setQuantity] = useState(1);
   const [status, setStatus] = useState('');
+  const [feedback, setFeedback] = useState<{ variant: 'pending' | 'success' | 'error'; title: string; description: string } | null>(null);
 
   const mintFee = Number.parseFloat(mintFeeStrk || '0');
   const mintPrice = Number.parseFloat(mintPriceStrk || '0');
@@ -33,12 +35,40 @@ export function MintForm({
   async function onSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setStatus('Submitting mint transaction...');
+    setFeedback(null);
 
     try {
       const res = await mintCollection(collectionAddress, quantity);
-      setStatus(`Success. Tx: ${res.txHash}`);
+      setStatus('Transaction submitted. Waiting for confirmation...');
+      setFeedback({
+        variant: 'pending',
+        title: 'Mint submitted',
+        description: `${quantity} NFT mint request has been sent to the network. Waiting for confirmation.`,
+      });
+      void res.confirmed
+        .then(() => {
+          setStatus(`Success. Tx: ${res.txHash}`);
+          setFeedback({
+            variant: 'success',
+            title: 'Mint successful',
+            description: `${quantity} NFT${quantity > 1 ? 's were' : ' was'} minted successfully.`,
+          });
+        })
+        .catch((error) => {
+          setStatus(error instanceof Error ? error.message : 'Mint confirmation failed');
+          setFeedback({
+            variant: 'error',
+            title: 'Mint failed',
+            description: error instanceof Error ? error.message : 'Mint confirmation failed',
+          });
+        });
     } catch (error) {
       setStatus(error instanceof Error ? error.message : 'Unknown error');
+      setFeedback({
+        variant: 'error',
+        title: 'Mint could not start',
+        description: error instanceof Error ? error.message : 'Unknown error',
+      });
     }
   }
 
@@ -80,6 +110,12 @@ export function MintForm({
 
       <button type="submit">Mint NFT</button>
       {status ? <small className="muted">{status}</small> : null}
+      <TransactionFeedbackCard
+        open={Boolean(feedback)}
+        variant={feedback?.variant || 'pending'}
+        title={feedback?.title || ''}
+        description={feedback?.description || ''}
+      />
     </form>
   );
 }

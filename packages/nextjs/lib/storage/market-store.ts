@@ -79,6 +79,12 @@ type NftCollectionRow = {
   updated_at: string;
 };
 
+const HIDDEN_NFT_MARKER = '__hidden__:';
+
+function isHiddenNftRow(row: Pick<NftCollectionRow, 'created_tx_hash'>) {
+  return String(row.created_tx_hash || '').startsWith(HIDDEN_NFT_MARKER);
+}
+
 type NftLaunchpadMetaRow = {
   factory_address: string;
   deploy_fee_strk: string;
@@ -669,12 +675,14 @@ export async function upsertNftCollections(rows: Array<Omit<NftCollectionRow, 'u
 export async function listNftCollections(limit = 500): Promise<NftCollectionRow[]> {
   const sb = supabase();
   if (sb) {
-    const { data } = await sb.from('nft_collections').select('*').order('idx', { ascending: false }).limit(limit);
-    return (data as NftCollectionRow[] | null) ?? [];
+    const { data } = await sb.from('nft_collections').select('*').order('idx', { ascending: false }).limit(limit * 3);
+    return ((data as NftCollectionRow[] | null) ?? []).filter(row => !isHiddenNftRow(row)).slice(0, limit);
   }
   const db = await sqliteDb();
   if (!db) return [];
-  return db.prepare('SELECT * FROM nft_collections ORDER BY idx DESC LIMIT ?').all(limit) as NftCollectionRow[];
+  return (db.prepare('SELECT * FROM nft_collections ORDER BY idx DESC LIMIT ?').all(limit * 3) as NftCollectionRow[])
+    .filter((row) => !isHiddenNftRow(row))
+    .slice(0, limit);
 }
 
 export async function getNftCollectionByAddress(address: string): Promise<NftCollectionRow | null> {
@@ -688,6 +696,29 @@ export async function getNftCollectionByAddress(address: string): Promise<NftCol
   if (!db) return null;
   const row = db.prepare('SELECT * FROM nft_collections WHERE collection_address = ?').get(key) as NftCollectionRow | undefined;
   return row ?? null;
+}
+
+export async function setNftCollectionHidden(address: string, hidden: boolean) {
+  const key = canonicalAddress(address).toLowerCase();
+  const stamp = nowIso();
+  const sb = supabase();
+  if (sb) {
+    const { data } = await sb.from('nft_collections').select('created_tx_hash').eq('collection_address', key).maybeSingle();
+    const current = (data as Pick<NftCollectionRow, 'created_tx_hash'> | null)?.created_tx_hash || null;
+    const nextValue = hidden
+      ? `${HIDDEN_NFT_MARKER}${current && !String(current).startsWith(HIDDEN_NFT_MARKER) ? current : ''}`
+      : String(current || '').replace(HIDDEN_NFT_MARKER, '') || null;
+    await sb.from('nft_collections').update({ created_tx_hash: nextValue, updated_at: stamp }).eq('collection_address', key);
+    return;
+  }
+  const db = await sqliteDb();
+  if (!db) return;
+  const row = db.prepare('SELECT created_tx_hash FROM nft_collections WHERE collection_address = ?').get(key) as { created_tx_hash?: string | null } | undefined;
+  const current = row?.created_tx_hash || null;
+  const nextValue = hidden
+    ? `${HIDDEN_NFT_MARKER}${current && !String(current).startsWith(HIDDEN_NFT_MARKER) ? current : ''}`
+    : String(current || '').replace(HIDDEN_NFT_MARKER, '') || null;
+  db.prepare('UPDATE nft_collections SET created_tx_hash = ?, updated_at = ? WHERE collection_address = ?').run(nextValue, stamp, key);
 }
 
 export async function upsertNftLaunchpadMeta(row: Omit<NftLaunchpadMetaRow, 'updated_at'> & { updated_at?: string }) {

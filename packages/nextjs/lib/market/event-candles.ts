@@ -2,6 +2,7 @@ import { RpcProvider, hash } from 'starknet';
 import { env } from '~~/lib/config';
 import { getCandles, getCursor, pairKey, saveCandles, saveSwaps, setCursor } from '~~/lib/storage/market-store';
 import { canonicalAddress } from '~~/lib/starknet/address';
+import { getServerRpcUrl } from '~~/lib/starknet/rpc';
 
 type SwapPoint = {
   timestamp: number;
@@ -31,7 +32,7 @@ const MAX_BLOCKS_PER_QUERY = 1024;
 
 function getProvider() {
   return new RpcProvider({
-    nodeUrl: env.NEXT_PUBLIC_STARKNET_RPC || 'https://starknet-mainnet-rpc.publicnode.com',
+    nodeUrl: getServerRpcUrl(),
   });
 }
 

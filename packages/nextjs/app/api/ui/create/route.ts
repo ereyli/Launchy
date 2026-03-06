@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { fetchLaunchpadData } from '~~/lib/launchpad/collections';
+import { fetchLaunchpadMeta } from '~~/lib/launchpad/collections';
 import { env } from '~~/lib/config';
 
 export const revalidate = 120;
@@ -10,7 +10,7 @@ export async function GET() {
 
   if (env.NEXT_PUBLIC_FACTORY_ADDRESS) {
     try {
-      const data = await fetchLaunchpadData();
+      const data = await fetchLaunchpadMeta();
       deployFeeStrk = data.deployFeeStrk;
       mintFeeStrk = data.mintFeeStrk;
     } catch {

@@ -1,15 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { RpcProvider } from 'starknet';
 import { env } from '~~/lib/config';
+import { getServerRpcUrl } from '~~/lib/starknet/rpc';
 import { canonicalAddress } from '~~/lib/starknet/address';
 import { pairKey } from '~~/lib/storage/market-store';
-
-const DEFAULT_RPC = 'https://starknet-mainnet-rpc.publicnode.com';
 const senderCache = new Map<string, string>();
 
 function getProvider() {
   return new RpcProvider({
-    nodeUrl: env.NEXT_PUBLIC_STARKNET_RPC || DEFAULT_RPC,
+    nodeUrl: getServerRpcUrl(),
   });
 }
 

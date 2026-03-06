@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { RpcProvider, hash } from 'starknet';
+import { getServerRpcUrl } from '~~/lib/starknet/rpc';
 import { canonicalAddress } from '~~/lib/starknet/address';
 import { upsertNftCollections } from '~~/lib/storage/market-store';
 
@@ -16,13 +17,11 @@ type Body = {
   imageUrl?: string;
 };
 
-const DEFAULT_RPC = 'https://starknet-mainnet-rpc.publicnode.com';
-
 async function resolveCollectionAddressFromTx(txHash: string) {
   const factoryAddress = process.env.NEXT_PUBLIC_FACTORY_ADDRESS || '';
   if (!factoryAddress) return '';
   const provider = new RpcProvider({
-    nodeUrl: process.env.NEXT_PUBLIC_STARKNET_RPC || DEFAULT_RPC,
+    nodeUrl: getServerRpcUrl(),
   });
   const selector = hash.getSelectorFromName('CollectionCreated').toLowerCase();
   const factory = canonicalAddress(factoryAddress).toLowerCase();
@@ -85,4 +84,3 @@ export async function POST(request: Request) {
     );
   }
 }
-

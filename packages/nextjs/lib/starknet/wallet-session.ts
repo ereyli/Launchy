@@ -4,6 +4,7 @@ import { RpcProvider, type Call } from 'starknet';
 import { getStarknet } from '@starknet-io/get-starknet-core';
 import { StarkSDK, OnboardStrategy, type WalletInterface } from 'starkzap';
 import { env } from '~~/lib/config';
+import { CLIENT_RPC_PROXY_PATH } from '~~/lib/starknet/rpc';
 import { canonicalAddress, sameAddress } from '~~/lib/starknet/address';
 
 export type WalletKind = 'injected' | 'cartridge';
@@ -203,7 +204,7 @@ function getInjectedManager() {
 function getFallbackRpcProvider() {
   if (!fallbackRpcProvider) {
     fallbackRpcProvider = new RpcProvider({
-      nodeUrl: env.NEXT_PUBLIC_STARKNET_RPC || 'https://starknet-mainnet-rpc.publicnode.com',
+      nodeUrl: CLIENT_RPC_PROXY_PATH,
     });
   }
   return fallbackRpcProvider;
