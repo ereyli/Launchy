@@ -71,9 +71,6 @@ function getSdk() {
   if (!sdkInstance) {
     sdkInstance = new StarkSDK({
       network: env.NEXT_PUBLIC_STARKNET_NETWORK === 'mainnet' ? 'mainnet' : 'sepolia',
-      paymaster: env.NEXT_PUBLIC_PAYMASTER_URL
-        ? { nodeUrl: env.NEXT_PUBLIC_PAYMASTER_URL }
-        : undefined,
     });
   }
   return sdkInstance;
@@ -396,21 +393,9 @@ export async function connectCartridgeWallet(_options?: { silent?: boolean }) {
     kind: 'cartridge',
     address: canonicalAddress(wallet.address),
     label: 'Cartridge',
-    execute: async (calls, options) => {
+    execute: async (calls) => {
       validateApproveCalls(calls);
-      let tx;
-      try {
-        tx = await wallet.execute(calls, {
-          feeMode: options?.sponsored === false ? 'user_pays' : 'sponsored',
-        });
-      } catch (error) {
-        const message = error instanceof Error ? error.message.toLowerCase() : String(error).toLowerCase();
-        if (message.includes('snip-9') || message.includes('paymaster') || message.includes('unknown block tag')) {
-          tx = await wallet.execute(calls, { feeMode: 'user_pays' });
-        } else {
-          throw error;
-        }
-      }
+      const tx = await wallet.execute(calls, { feeMode: 'user_pays' });
       return {
         hash: tx.hash,
         wait: async () => {

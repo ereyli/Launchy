@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { MintForm } from '~~/components/mint-form';
 import { CopyButton } from '~~/components/copy-button';
 import { formatDecimalDots, formatIntegerDots } from '~~/lib/format';
+import { proxiedImageUrl } from '~~/lib/assets/image-url';
 import { fetchCollectionByAddress, fetchLaunchpadData } from '~~/lib/launchpad/collections';
 import { getPinataAlias } from '~~/lib/pinata/alias-store';
 import { ipfsGatewayUrl } from '~~/lib/pinata/server';
@@ -70,7 +71,7 @@ export default async function CollectionPage({ params }: { params: Promise<{ add
       <section className="collection-mint-layout figma-detail-grid">
         <div className="figma-panel panel-overview collection-overview-card">
           {pinata ? (
-            <img className="collection-image" src={ipfsGatewayUrl(pinata.imageCid)} alt={`${collection.name} cover`} />
+            <img className="collection-image" src={proxiedImageUrl(ipfsGatewayUrl(pinata.imageCid))} alt={`${collection.name} cover`} />
           ) : (
             <div className="collection-image collection-image-placeholder">
               <span>{collection.symbol || collection.name}</span>

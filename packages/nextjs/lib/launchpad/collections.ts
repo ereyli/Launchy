@@ -1,4 +1,5 @@
 import { RpcProvider, byteArray, shortString } from 'starknet';
+import { proxiedImageUrl } from '~~/lib/assets/image-url';
 import { env } from '~~/lib/config';
 import { getPinataAlias } from '~~/lib/pinata/alias-store';
 import { ipfsGatewayUrl } from '~~/lib/pinata/server';
@@ -170,7 +171,7 @@ async function fetchCollectionByAddressWithProvider(
     maxSupply,
     progressPct,
     baseUri,
-    imageUrl,
+    imageUrl: proxiedImageUrl(imageUrl),
   };
 }
 
@@ -189,7 +190,7 @@ export async function fetchCollectionByAddress(address: string): Promise<LaunchC
       maxSupply: cached.max_supply,
       progressPct: cached.progress_pct,
       baseUri: cached.base_uri,
-      imageUrl: cached.image_url || undefined,
+      imageUrl: proxiedImageUrl(cached.image_url),
     };
   }
   const rpc = env.NEXT_PUBLIC_STARKNET_RPC || DEFAULT_RPC;
@@ -234,7 +235,7 @@ export async function fetchLaunchpadData(): Promise<LaunchpadData> {
         maxSupply: row.max_supply,
         progressPct: row.progress_pct,
         baseUri: row.base_uri,
-        imageUrl: row.image_url || undefined,
+        imageUrl: proxiedImageUrl(row.image_url),
       })),
       deployFeeStrk: cachedMeta.deploy_fee_strk,
       mintFeeStrk: cachedMeta.mint_fee_strk,
@@ -271,7 +272,7 @@ async function syncLaunchpadFromChain(provider: RpcProvider, factoryAddress: str
     return {
       ...collection,
       index: idx,
-      imageUrl: collection.imageUrl || existing?.image_url || undefined,
+      imageUrl: proxiedImageUrl(collection.imageUrl || existing?.image_url),
     };
   });
 

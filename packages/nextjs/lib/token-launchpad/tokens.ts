@@ -1,4 +1,5 @@
 import { RpcProvider, hash, shortString } from 'starknet';
+import { proxiedImageUrl } from '~~/lib/assets/image-url';
 import { env } from '~~/lib/config';
 import { getTokenInitialMarketCapUsdMap, listTokenLaunchRows, upsertTokenLaunchRow } from '~~/lib/storage/market-store';
 import { canonicalAddress } from '~~/lib/starknet/address';
@@ -138,7 +139,7 @@ export async function fetchTokenByAddress(address: string): Promise<TokenLaunchR
     owner: normalizeHexAddress(ownerRaw[0]),
     name: decodeShortStringSafe(nameRaw[0]),
     symbol: decodeShortStringSafe(symbolRaw[0]),
-    logoImageUrl: profile?.imageUrl,
+    logoImageUrl: proxiedImageUrl(profile?.imageUrl),
     logoImageCid: profile?.imageCid,
     totalSupply,
     totalSupplyFormatted: formatUnits(totalSupply, TOKEN_DECIMALS),
@@ -160,7 +161,7 @@ export async function fetchLatestTokenLaunches(limit = 24): Promise<TokenLaunchR
         owner: normalizeHexAddress(row.owner),
         name: row.name,
         symbol: row.symbol,
-        logoImageUrl: profile?.imageUrl,
+        logoImageUrl: proxiedImageUrl(profile?.imageUrl),
         logoImageCid: profile?.imageCid,
         initialMarketCapUsd: initialMcs[row.token_address.toLowerCase()],
         totalSupply: BigInt(row.total_supply),
@@ -196,7 +197,7 @@ export async function fetchLatestTokenLaunches(limit = 24): Promise<TokenLaunchR
         const profile = profiles[row.address.toLowerCase()];
         return {
           ...token,
-          logoImageUrl: token.logoImageUrl || profile?.imageUrl,
+          logoImageUrl: proxiedImageUrl(token.logoImageUrl || profile?.imageUrl),
           logoImageCid: token.logoImageCid || profile?.imageCid,
           createdTxHash: row.txHash,
           createdAtBlock: row.blockNumber,

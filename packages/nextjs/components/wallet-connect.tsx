@@ -167,9 +167,7 @@ export function WalletConnect({ compact = false }: { compact?: boolean }) {
               </button>
             </div>
           )}
-          <small className="muted wallet-hint">
-            Cartridge uses sponsored mainnet flow. Browser wallets fall back to user-paid gas.
-          </small>
+          <small className="muted wallet-hint">Standard wallet flow active.</small>
         </>
       )}
       {error ? <small className="wallet-error">{error}</small> : null}
