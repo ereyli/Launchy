@@ -4,7 +4,6 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useState } from 'react';
 import { WalletConnect } from '~~/components/wallet-connect';
-import { connectCartridgeWallet } from '~~/lib/starknet/wallet-session';
 
 const NAV_ITEMS = [
   { href: '/', label: 'Home' },
@@ -16,16 +15,6 @@ const NAV_ITEMS = [
 export function SiteHeader({ networkLabel: _networkLabel }: { networkLabel: string }) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
-  const [isCartridgeBusy, setIsCartridgeBusy] = useState(false);
-
-  async function connectCartridge() {
-    try {
-      setIsCartridgeBusy(true);
-      await connectCartridgeWallet();
-    } finally {
-      setIsCartridgeBusy(false);
-    }
-  }
 
   return (
     <header className="site-header">
@@ -56,9 +45,6 @@ export function SiteHeader({ networkLabel: _networkLabel }: { networkLabel: stri
           <div className="site-header-wallet-inline">
             <WalletConnect compact />
           </div>
-          <button type="button" className="site-create-link" onClick={connectCartridge} disabled={isCartridgeBusy}>
-            {isCartridgeBusy ? 'Connecting...' : 'Cartridge'}
-          </button>
           <button
             type="button"
             className="site-mobile-menu-btn"

@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
 import {
   connectCartridgeWallet,
@@ -102,10 +103,19 @@ export function WalletConnect({ compact = false }: { compact?: boolean }) {
                 <span className="wallet-provider-dot" />
                 {isBusy ? 'Connecting...' : 'Connect Wallet'}
               </button>
+              <button type="button" className="wallet-provider wallet-provider-cartridge" onClick={connectCartridge} disabled={isBusy}>
+                <Image src="/cartridge-logo.svg" alt="" width={16} height={16} className="wallet-provider-logo" />
+                {isBusy ? 'Connecting...' : 'Cartridge'}
+              </button>
             </div>
           ) : (
             <div className="wallet-actions">
-              <span className="wallet-state">{addressLabel}</span>
+              <span className={`wallet-state wallet-state-inline ${session.kind === 'cartridge' ? 'wallet-state-cartridge' : ''}`}>
+                {session.kind === 'cartridge' ? (
+                  <Image src="/cartridge-logo.svg" alt="" width={16} height={16} className="wallet-provider-logo" />
+                ) : null}
+                {addressLabel}
+              </span>
               {session.kind === 'cartridge' ? (
                 <button type="button" className="copy-icon-btn" onClick={copyWalletAddress} disabled={isBusy} aria-label={copied ? 'Copied' : 'Copy address'} title={copied ? 'Copied!' : 'Copy address'}>
                   {copied ? (
@@ -128,15 +138,21 @@ export function WalletConnect({ compact = false }: { compact?: boolean }) {
             <div className="wallet-actions">
               <button type="button" className="wallet-provider wallet-provider-injected" onClick={connectInjected} disabled={isBusy}>
                 <span className="wallet-provider-dot" />
-                {isBusy ? 'Connecting...' : 'Browser Wallet'}
+                {isBusy ? 'Connecting...' : 'Connect Wallet'}
               </button>
               <button type="button" className="wallet-provider wallet-provider-cartridge" onClick={connectCartridge} disabled={isBusy}>
-                <span className="wallet-provider-dot" />
+                <Image src="/cartridge-logo.svg" alt="" width={16} height={16} className="wallet-provider-logo" />
                 {isBusy ? 'Connecting...' : 'Cartridge'}
               </button>
             </div>
           ) : (
             <div className="wallet-actions">
+              <span className={`wallet-state wallet-state-inline ${session.kind === 'cartridge' ? 'wallet-state-cartridge' : ''}`}>
+                {session.kind === 'cartridge' ? (
+                  <Image src="/cartridge-logo.svg" alt="" width={16} height={16} className="wallet-provider-logo" />
+                ) : null}
+                {addressLabel}
+              </span>
               {session.kind === 'cartridge' ? (
                 <button type="button" className="copy-icon-btn" onClick={copyWalletAddress} disabled={isBusy} aria-label={copied ? 'Copied' : 'Copy address'} title={copied ? 'Copied!' : 'Copy address'}>
                   {copied ? (

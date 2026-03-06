@@ -1255,23 +1255,37 @@ button:disabled {
   display: flex;
   flex-wrap: wrap;
   justify-content: flex-end;
-  gap: 0.35rem;
+  align-items: center;
+  gap: 0.45rem;
 }
 
 .wallet-provider {
   display: inline-flex;
   align-items: center;
-  gap: 0.35rem;
-  font-size: 0.76rem;
-  padding: 0.42rem 0.7rem;
-  border-radius: var(--radius-sm);
+  justify-content: center;
+  gap: 0.42rem;
+  min-height: 40px;
+  min-width: 142px;
+  padding: 0.7rem 0.95rem;
+  border-radius: 0.95rem;
+  font-size: 0.78rem;
+  font-weight: 650;
+  line-height: 1;
+  white-space: nowrap;
 }
 
 .wallet-provider-dot {
-  width: 6px;
-  height: 6px;
+  width: 10px;
+  height: 10px;
   border-radius: var(--radius-full);
   background: currentColor;
+}
+
+.wallet-provider-logo {
+  width: 0.95rem;
+  height: 0.95rem;
+  flex: 0 0 auto;
+  border-radius: 0.2rem;
 }
 
 .wallet-provider-injected {
@@ -1280,6 +1294,20 @@ button:disabled {
 
 .wallet-provider-cartridge {
   color: var(--text-primary);
+}
+
+.wallet-state-inline {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.42rem;
+  min-height: 40px;
+  padding: 0.55rem 0.85rem;
+}
+
+.wallet-state-cartridge {
+  border: 1px solid var(--border-default);
+  border-radius: 0.95rem;
+  background: rgba(255, 255, 255, 0.035);
 }
 
 .wallet-hint {
@@ -3681,15 +3709,14 @@ input[type="file"]::file-selector-button:hover {
 
 .wallet-provider {
   font-size: 0.78rem;
-  padding: 0.45rem 0.75rem;
-  border-radius: var(--radius-md);
-  font-weight: 600;
+  font-weight: 650;
   transition: all var(--transition-fast);
 }
 
 .wallet-provider-injected {
   background: var(--gradient-brand);
   color: var(--text-inverse);
+  box-shadow: var(--shadow-glow);
 }
 
 .wallet-provider-injected:hover {
@@ -5624,9 +5651,10 @@ button:not(.ghost-button):not(.dex-direction):not(.dex-chip):not(.dex-chip-activ
 }
 
 .site-header-wallet-inline .wallet-provider {
-  padding: 0.42rem 0.78rem;
-  font-size: 0.78rem;
-  border-radius: var(--radius-lg);
+  min-width: 136px;
+  padding: 0.68rem 0.9rem;
+  font-size: 0.76rem;
+  border-radius: 0.95rem;
 }
 
 .site-mobile-menu-btn {
