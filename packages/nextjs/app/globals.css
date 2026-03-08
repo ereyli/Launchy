@@ -1088,7 +1088,7 @@ button:disabled {
   min-height: 300px;
   border-radius: var(--radius-lg);
   border: 1px solid var(--border-subtle);
-  background: var(--bg-surface);
+  background: #f3f3f3;
   object-fit: contain;
   object-position: center;
 }
