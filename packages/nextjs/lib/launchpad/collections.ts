@@ -183,20 +183,13 @@ async function fetchCollectionByAddressWithProvider(
 export async function fetchCollectionByAddress(address: string): Promise<LaunchCollection> {
   const cached = await getNftCollectionByAddress(address);
   if (cached) {
+    const rpc = getServerRpcUrl();
+    const provider = new RpcProvider({ nodeUrl: rpc });
+    const chainCollection = await fetchCollectionByAddressWithProvider(provider, address);
     return {
+      ...chainCollection,
       index: cached.idx,
-      address: canonicalAddress(cached.collection_address),
-      name: cached.name,
-      symbol: cached.symbol,
-      creator: canonicalAddress(cached.creator),
-      model: cached.model,
-      mintPriceStrk: cached.mint_price_strk,
-      maxPerWallet: 0,
-      minted: cached.minted,
-      maxSupply: cached.max_supply,
-      progressPct: cached.progress_pct,
-      baseUri: cached.base_uri,
-      imageUrl: proxiedImageUrl(cached.image_url),
+      imageUrl: chainCollection.imageUrl || proxiedImageUrl(cached.image_url),
     };
   }
   const rpc = getServerRpcUrl();

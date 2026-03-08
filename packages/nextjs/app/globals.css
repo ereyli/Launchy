@@ -1089,7 +1089,8 @@ button:disabled {
   border-radius: var(--radius-lg);
   border: 1px solid var(--border-subtle);
   background: var(--bg-surface);
-  object-fit: cover;
+  object-fit: contain;
+  object-position: center;
 }
 
 .collection-image-placeholder {
@@ -6129,7 +6130,6 @@ button:not(.ghost-button):not(.dex-direction):not(.dex-chip):not(.dex-chip-activ
 .figma-home-card-cover img,
 .figma-nft-cover img,
 .figma-spotlight-media img,
-.collection-image,
 .token-market-cover img,
 .tk-logo img,
 .nk-cover-img {
