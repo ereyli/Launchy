@@ -2,10 +2,7 @@ import Link from 'next/link';
 import { MintForm } from '~~/components/mint-form';
 import { CopyButton } from '~~/components/copy-button';
 import { formatDecimalDots, formatIntegerDots } from '~~/lib/format';
-import { proxiedImageUrl } from '~~/lib/assets/image-url';
 import { fetchCollectionByAddress, fetchLaunchpadMeta } from '~~/lib/launchpad/collections';
-import { getPinataAlias } from '~~/lib/pinata/alias-store';
-import { ipfsGatewayUrl } from '~~/lib/pinata/server';
 import { checksumAddress } from '~~/lib/starknet/address';
 import { notFound } from 'next/navigation';
 
@@ -21,7 +18,6 @@ export default async function CollectionPage({ params }: { params: Promise<{ add
   } catch {
     notFound();
   }
-  const pinata = await getPinataAlias(collection.baseUri);
   const mintedPct = collection.maxSupply > 0 ? ((collection.minted / collection.maxSupply) * 100).toFixed(1) : '0.0';
 
   return (
@@ -70,8 +66,8 @@ export default async function CollectionPage({ params }: { params: Promise<{ add
 
       <section className="collection-mint-layout figma-detail-grid">
         <div className="figma-panel panel-overview collection-overview-card">
-          {pinata ? (
-            <img className="collection-image" src={proxiedImageUrl(ipfsGatewayUrl(pinata.imageCid))} alt={`${collection.name} cover`} />
+          {collection.imageUrl ? (
+            <img className="collection-image" src={collection.imageUrl} alt={`${collection.name} cover`} />
           ) : (
             <div className="collection-image collection-image-placeholder">
               <span>{collection.symbol || collection.name}</span>
