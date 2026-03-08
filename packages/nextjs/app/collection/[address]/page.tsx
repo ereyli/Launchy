@@ -92,6 +92,7 @@ export default async function CollectionPage({ params }: { params: Promise<{ add
             mintFeeStrk={launchpad.mintFeeStrk}
             mintPriceStrk={collection.mintPriceStrk}
             isFreeMintModel={collection.model === 'free'}
+            maxPerWallet={collection.maxPerWallet}
           />
         </div>
       </section>

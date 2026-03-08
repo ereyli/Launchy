@@ -3549,6 +3549,11 @@ input[type="file"]::file-selector-button:hover {
   gap: 0.55rem;
 }
 
+.mint-limit-note {
+  margin-top: -0.1rem;
+  font-size: 0.9rem;
+}
+
 .mint-mini-stat {
   padding: 0.7rem 0.85rem;
   border-radius: var(--radius-md);

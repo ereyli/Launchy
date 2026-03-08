@@ -10,11 +10,13 @@ export function MintForm({
   mintFeeStrk,
   mintPriceStrk,
   isFreeMintModel,
+  maxPerWallet,
 }: {
   collectionAddress: string;
   mintFeeStrk: string;
   mintPriceStrk: string;
   isFreeMintModel: boolean;
+  maxPerWallet: number;
 }) {
   const [quantity, setQuantity] = useState(1);
   const [status, setStatus] = useState('');
@@ -80,13 +82,21 @@ export function MintForm({
         <input
           type="number"
           min={1}
+          max={maxPerWallet > 0 ? maxPerWallet : undefined}
           value={quantity}
           onChange={(e) => {
             const next = Number.parseInt(e.target.value, 10);
-            setQuantity(Number.isFinite(next) && next > 0 ? next : 1);
+            const normalized = Number.isFinite(next) && next > 0 ? next : 1;
+            setQuantity(maxPerWallet > 0 ? Math.min(normalized, maxPerWallet) : normalized);
           }}
         />
       </label>
+
+      <div className="mint-limit-note muted">
+        {maxPerWallet > 0
+          ? `Per wallet limit: ${formatIntegerDots(maxPerWallet)} NFT${maxPerWallet > 1 ? 's' : ''}`
+          : 'Per wallet limit: Unlimited'}
+      </div>
 
       <div className="mint-mini-grid">
         <div className="stat mint-mini-stat">

@@ -15,6 +15,7 @@ export type LaunchCollection = {
   creator: string;
   model: 'free' | 'paid';
   mintPriceStrk: string;
+  maxPerWallet: number;
   minted: number;
   maxSupply: number;
   progressPct: number;
@@ -138,12 +139,13 @@ async function fetchCollectionByAddressWithProvider(
   address: string,
 ): Promise<LaunchCollection> {
 
-  const [nameRaw, symbolRaw, creatorRaw, freeRaw, mintPriceRaw, mintedRaw, maxSupplyRaw, baseUriRaw, metadataUriRaw, contractUriRaw] = await Promise.all([
+  const [nameRaw, symbolRaw, creatorRaw, freeRaw, mintPriceRaw, maxPerWalletRaw, mintedRaw, maxSupplyRaw, baseUriRaw, metadataUriRaw, contractUriRaw] = await Promise.all([
     call(provider, address, 'name'),
     call(provider, address, 'symbol'),
     call(provider, address, 'owner'),
     call(provider, address, 'is_free_mint_model'),
     call(provider, address, 'mint_price'),
+    call(provider, address, 'max_per_wallet'),
     call(provider, address, 'total_supply'),
     call(provider, address, 'max_supply'),
     call(provider, address, 'base_uri'),
@@ -169,6 +171,7 @@ async function fetchCollectionByAddressWithProvider(
     creator: canonicalAddress(creatorRaw[0]),
     model,
     mintPriceStrk,
+    maxPerWallet: Number(toBigInt(maxPerWalletRaw[0] ?? '0')),
     minted,
     maxSupply,
     progressPct,
@@ -188,6 +191,7 @@ export async function fetchCollectionByAddress(address: string): Promise<LaunchC
       creator: canonicalAddress(cached.creator),
       model: cached.model,
       mintPriceStrk: cached.mint_price_strk,
+      maxPerWallet: 0,
       minted: cached.minted,
       maxSupply: cached.max_supply,
       progressPct: cached.progress_pct,
@@ -222,6 +226,7 @@ export async function fetchLaunchpadData(): Promise<LaunchpadData> {
       creator: canonicalAddress(row.creator),
       model: row.model,
       mintPriceStrk: row.mint_price_strk,
+      maxPerWallet: 0,
       minted: row.minted,
       maxSupply: row.max_supply,
       progressPct: row.progress_pct,
