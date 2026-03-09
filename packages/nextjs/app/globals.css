@@ -1086,7 +1086,7 @@ button:disabled {
   max-width: 100%;
   height: auto;
   min-height: 0;
-  max-height: none;
+  max-height: 520px;
   border-radius: var(--radius-lg);
   border: 1px solid var(--border-subtle);
   background: transparent;
@@ -2037,7 +2037,7 @@ button:disabled {
 
 .collection-image {
   min-height: 0;
-  max-height: none;
+  max-height: 420px;
 }
 
 /* ── NFT Spotlight ───────────────────────────── */
@@ -2155,7 +2155,7 @@ button:disabled {
 
   .collection-image {
     min-height: 0;
-    max-height: none;
+    max-height: 320px;
   }
 
   .mint-mini-grid {
