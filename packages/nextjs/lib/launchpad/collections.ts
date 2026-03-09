@@ -186,6 +186,23 @@ export async function fetchCollectionByAddress(address: string): Promise<LaunchC
     const rpc = getServerRpcUrl();
     const provider = new RpcProvider({ nodeUrl: rpc });
     const chainCollection = await fetchCollectionByAddressWithProvider(provider, address);
+    await upsertNftCollections([
+      {
+        collection_address: chainCollection.address,
+        idx: cached.idx,
+        name: chainCollection.name,
+        symbol: chainCollection.symbol,
+        creator: cached.creator || chainCollection.creator,
+        model: chainCollection.model,
+        mint_price_strk: chainCollection.mintPriceStrk,
+        minted: chainCollection.minted,
+        max_supply: chainCollection.maxSupply,
+        progress_pct: chainCollection.progressPct,
+        base_uri: chainCollection.baseUri,
+        image_url: chainCollection.imageUrl || proxiedImageUrl(cached.image_url) || null,
+        created_tx_hash: cached.created_tx_hash,
+      },
+    ]);
     return {
       ...chainCollection,
       index: cached.idx,
