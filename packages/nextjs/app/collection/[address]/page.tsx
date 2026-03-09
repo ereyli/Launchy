@@ -1,3 +1,4 @@
+import type { Metadata } from 'next';
 import Link from 'next/link';
 import { MintForm } from '~~/components/mint-form';
 import { CopyButton } from '~~/components/copy-button';
@@ -5,6 +6,39 @@ import { formatDecimalDots, formatIntegerDots } from '~~/lib/format';
 import { fetchCollectionByAddress, fetchLaunchpadMeta } from '~~/lib/launchpad/collections';
 import { checksumAddress } from '~~/lib/starknet/address';
 import { notFound } from 'next/navigation';
+
+export async function generateMetadata({ params }: { params: Promise<{ address: string }> }): Promise<Metadata> {
+  const { address } = await params;
+
+  try {
+    const collection = await fetchCollectionByAddress(address);
+    const title = `${collection.name} | Mint on Launchy`;
+    const description = `${formatIntegerDots(collection.minted)} minted out of ${formatIntegerDots(collection.maxSupply)}. Mint ${collection.name} on Starknet via Launchy.`;
+    const image = collection.imageUrl || '/launchy.png';
+
+    return {
+      title,
+      description,
+      openGraph: {
+        title,
+        description,
+        type: 'website',
+        images: [{ url: image, alt: `${collection.name} cover` }],
+      },
+      twitter: {
+        card: 'summary_large_image',
+        title,
+        description,
+        images: [image],
+      },
+    };
+  } catch {
+    return {
+      title: 'Collection | Launchy',
+      description: 'Mint NFT collections on Starknet via Launchy.',
+    };
+  }
+}
 
 export default async function CollectionPage({ params }: { params: Promise<{ address: string }> }) {
   const { address } = await params;
