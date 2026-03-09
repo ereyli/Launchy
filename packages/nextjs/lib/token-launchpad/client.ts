@@ -16,6 +16,22 @@ function getReadProvider() {
   return new RpcProvider({ nodeUrl: CLIENT_RPC_PROXY_PATH });
 }
 
+async function readContract(
+  provider: RpcProvider,
+  contractAddress: string,
+  entrypoint: string,
+  calldata: string[] = [],
+) {
+  return provider.callContract(
+    {
+      contractAddress,
+      entrypoint,
+      calldata,
+    },
+    'latest',
+  );
+}
+
 function feltText(text: string, field: string) {
   if (!text || text.length > 31) {
     throw new Error(`${field} must be 1-31 ASCII characters (felt252).`);
@@ -169,21 +185,17 @@ async function runBootstrapBuy(params: {
   let minOut = { low: '0', high: '0' };
 
   try {
-    const quoteRes = await params.provider.callContract({
-      contractAddress: feeRouter,
-      entrypoint: 'quote_exact_input',
-      calldata: [
-        poolKey.token0,
-        poolKey.token1,
-        poolKey.fee,
-        poolKey.tickSpacing,
-        poolKey.extension,
-        canonicalAddress(params.quoteTokenAddress),
-        amount.low,
-        amount.high,
-        '0x64', // 1.00% slippage
-      ],
-    });
+    const quoteRes = await readContract(params.provider, feeRouter, 'quote_exact_input', [
+      poolKey.token0,
+      poolKey.token1,
+      poolKey.fee,
+      poolKey.tickSpacing,
+      poolKey.extension,
+      canonicalAddress(params.quoteTokenAddress),
+      amount.low,
+      amount.high,
+      '0x64', // 1.00% slippage
+    ]);
     if (Array.isArray(quoteRes) && quoteRes.length >= 4) {
       const quotedOut = u256FromCallResult(quoteRes);
       if (quotedOut <= 0n) {
@@ -257,21 +269,9 @@ async function getFactoryFeeConfig(provider: RpcProvider) {
     throw new Error('NEXT_PUBLIC_TOKEN_FACTORY_ADDRESS is missing.');
   }
   const [feeTokenRaw, deployFeeRaw, memecoinClassHashRaw] = await Promise.all([
-    provider.callContract({
-      contractAddress: env.NEXT_PUBLIC_TOKEN_FACTORY_ADDRESS,
-      entrypoint: 'platform_fee_token',
-      calldata: [],
-    }),
-    provider.callContract({
-      contractAddress: env.NEXT_PUBLIC_TOKEN_FACTORY_ADDRESS,
-      entrypoint: 'platform_deploy_fee',
-      calldata: [],
-    }),
-    provider.callContract({
-      contractAddress: env.NEXT_PUBLIC_TOKEN_FACTORY_ADDRESS,
-      entrypoint: 'memecoin_class_hash',
-      calldata: [],
-    }),
+    readContract(provider, env.NEXT_PUBLIC_TOKEN_FACTORY_ADDRESS, 'platform_fee_token'),
+    readContract(provider, env.NEXT_PUBLIC_TOKEN_FACTORY_ADDRESS, 'platform_deploy_fee'),
+    readContract(provider, env.NEXT_PUBLIC_TOKEN_FACTORY_ADDRESS, 'memecoin_class_hash'),
   ]);
   return {
     feeToken: canonicalAddress(feeTokenRaw[0]),
@@ -432,11 +432,7 @@ export async function createAndLaunchMemecoin(input: CreateAndLaunchTokenInput):
     ? deployFeeWei + ownerBuyQuoteWei
     : deployFeeWei;
   if (totalFeeTokenNeed > 0n) {
-    const balanceRaw = await provider.callContract({
-      contractAddress: feeToken,
-      entrypoint: 'balance_of',
-      calldata: [session.address],
-    });
+    const balanceRaw = await readContract(provider, feeToken, 'balance_of', [session.address]);
     const balance = u256FromCallResult(balanceRaw);
     if (balance < totalFeeTokenNeed) {
       throw new Error(
@@ -531,11 +527,7 @@ export async function launchOnEkubo(input: LaunchOnEkuboInput): Promise<Submitte
     throw new Error('LP percent must be between 1 and 100.');
   }
 
-  const balanceRaw = await provider.callContract({
-    contractAddress: input.tokenAddress,
-    entrypoint: 'balance_of',
-    calldata: [session.address],
-  });
+  const balanceRaw = await readContract(provider, input.tokenAddress, 'balance_of', [session.address]);
   const tokenBalance = (BigInt(balanceRaw[1]) << 128n) + BigInt(balanceRaw[0]);
   if (tokenBalance <= 0n) {
     throw new Error('Wallet has zero token balance. Cannot open Ekubo pool.');
