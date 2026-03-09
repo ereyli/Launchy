@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { fetchLaunchpadData } from '~~/lib/launchpad/collections';
 import { fetchLatestTokenLaunches } from '~~/lib/token-launchpad/tokens';
 
-export const revalidate = 60;
+export const dynamic = 'force-dynamic';
 
 export async function GET() {
   const [nftData, tokens] = await Promise.all([

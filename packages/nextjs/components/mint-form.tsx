@@ -48,7 +48,12 @@ export function MintForm({
         description: `${quantity} NFT mint request has been sent to the network. Waiting for confirmation.`,
       });
       void res.confirmed
-        .then(() => {
+        .then(async () => {
+          await fetch('/api/nft/mint-sync', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ collectionAddress }),
+          }).catch(() => null);
           setStatus(`Success. Tx: ${res.txHash}`);
           setFeedback({
             variant: 'success',
