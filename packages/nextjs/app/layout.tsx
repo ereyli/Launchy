@@ -3,9 +3,10 @@ import type { Metadata } from 'next';
 import Script from 'next/script';
 import { MobileBottomNav } from '~~/components/mobile-bottom-nav';
 import { SiteHeader } from '~~/components/site-header';
+import { getSiteUrl } from '~~/lib/site-url';
 
 export const metadata: Metadata = {
-  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'),
+  metadataBase: new URL(getSiteUrl()),
   title: 'Launchy | Deploy & Trade Tokens and NFTs on Starknet',
   description: 'All-in-one Starknet launchpad for deploying NFT collections and tokens with built-in on-chain trading via Ekubo DEX.',
   openGraph: {
@@ -14,7 +15,7 @@ export const metadata: Metadata = {
     images: [{ url: '/launchy.png', width: 512, height: 512 }],
   },
   twitter: {
-    card: 'summary',
+    card: 'summary_large_image',
     title: 'Launchy | Starknet Launchpad',
     description: 'Deploy & trade tokens and NFTs on Starknet.',
     images: ['/launchy.png'],

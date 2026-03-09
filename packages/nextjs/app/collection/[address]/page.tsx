@@ -5,6 +5,7 @@ import { CopyButton } from '~~/components/copy-button';
 import { formatDecimalDots, formatIntegerDots } from '~~/lib/format';
 import { fetchCollectionByAddress, fetchLaunchpadMeta } from '~~/lib/launchpad/collections';
 import { checksumAddress } from '~~/lib/starknet/address';
+import { toAbsoluteUrl } from '~~/lib/site-url';
 import { notFound } from 'next/navigation';
 
 export async function generateMetadata({ params }: { params: Promise<{ address: string }> }): Promise<Metadata> {
@@ -14,11 +15,14 @@ export async function generateMetadata({ params }: { params: Promise<{ address: 
     const collection = await fetchCollectionByAddress(address);
     const title = `${collection.name} | Mint on Launchy`;
     const description = `${formatIntegerDots(collection.minted)} minted out of ${formatIntegerDots(collection.maxSupply)}. Mint ${collection.name} on Starknet via Launchy.`;
-    const image = collection.imageUrl || '/launchy.png';
+    const image = toAbsoluteUrl(collection.imageUrl || '/launchy.png');
 
     return {
       title,
       description,
+      alternates: {
+        canonical: `/collection/${address}`,
+      },
       openGraph: {
         title,
         description,
