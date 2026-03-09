@@ -180,6 +180,33 @@ async function fetchCollectionByAddressWithProvider(
   };
 }
 
+async function refreshMintedCounts(
+  provider: RpcProvider,
+  collections: LaunchCollection[],
+): Promise<LaunchCollection[]> {
+  if (!collections.length) return collections;
+
+  const refreshed = await Promise.all(
+    collections.map(async (collection) => {
+      try {
+        const mintedRaw = await call(provider, collection.address, 'total_supply');
+        const minted = Number(toBigInt(mintedRaw[0] ?? '0'));
+        const progressPct =
+          collection.maxSupply > 0 ? Math.min(100, Math.round((minted / collection.maxSupply) * 100)) : 0;
+        return {
+          ...collection,
+          minted,
+          progressPct,
+        };
+      } catch {
+        return collection;
+      }
+    }),
+  );
+
+  return refreshed;
+}
+
 export async function fetchCollectionByAddress(address: string): Promise<LaunchCollection> {
   const cached = await getNftCollectionByAddress(address);
   if (cached) {
@@ -227,8 +254,11 @@ export async function fetchLaunchpadData(): Promise<LaunchpadData> {
 
   const cachedCollections = await listNftCollections(1000);
   const cachedMeta = await getNftLaunchpadMeta(factoryAddress);
-  return {
-    collections: cachedCollections.map((row) => ({
+  const rpc = getServerRpcUrl();
+  const provider = new RpcProvider({ nodeUrl: rpc });
+  const collections = await refreshMintedCounts(
+    provider,
+    cachedCollections.map((row) => ({
       index: row.idx,
       address: canonicalAddress(row.collection_address),
       name: row.name,
@@ -243,6 +273,27 @@ export async function fetchLaunchpadData(): Promise<LaunchpadData> {
       baseUri: row.base_uri,
       imageUrl: proxiedImageUrl(row.image_url),
     })),
+  );
+  await upsertNftCollections(
+    collections.map((item, index) => ({
+      collection_address: item.address,
+      idx: item.index ?? index,
+      name: item.name,
+      symbol: item.symbol,
+      creator: item.creator,
+      model: item.model,
+      mint_price_strk: item.mintPriceStrk,
+      minted: item.minted,
+      max_supply: item.maxSupply,
+      progress_pct: item.progressPct,
+      base_uri: item.baseUri,
+      image_url: item.imageUrl || cachedCollections[index]?.image_url || null,
+      created_tx_hash: cachedCollections[index]?.created_tx_hash || null,
+    })),
+  );
+
+  return {
+    collections,
     deployFeeStrk: cachedMeta?.deploy_fee_strk || '0',
     mintFeeStrk: cachedMeta?.mint_fee_strk || '0',
     factoryAddress: canonicalAddress(factoryAddress),
