@@ -1084,11 +1084,12 @@ button:disabled {
 .collection-image {
   width: 100%;
   max-width: 100%;
-  height: 100%;
-  min-height: 300px;
+  height: auto;
+  min-height: 0;
+  max-height: none;
   border-radius: var(--radius-lg);
   border: 1px solid var(--border-subtle);
-  background: #f3f3f3;
+  background: transparent;
   object-fit: contain;
   object-position: center;
 }
@@ -2035,8 +2036,8 @@ button:disabled {
 }
 
 .collection-image {
-  min-height: 240px;
-  max-height: 320px;
+  min-height: 0;
+  max-height: none;
 }
 
 /* ── NFT Spotlight ───────────────────────────── */
@@ -2153,8 +2154,8 @@ button:disabled {
   }
 
   .collection-image {
-    min-height: 200px;
-    max-height: 260px;
+    min-height: 0;
+    max-height: none;
   }
 
   .mint-mini-grid {
