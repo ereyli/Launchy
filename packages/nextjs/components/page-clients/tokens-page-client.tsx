@@ -13,6 +13,7 @@ export type TokenLaunchpadItem = {
   totalSupplyFormatted: string;
   isLaunched: boolean;
   marketCapUsd: number;
+  change24hPct: number;
 };
 
 export function TokensPageClient() {

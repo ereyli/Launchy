@@ -13,7 +13,8 @@ type HomeToken = {
   logoImageUrl?: string;
   totalSupplyFormatted: string;
   isLaunched: boolean;
-  initialMarketCapUsd: number;
+  marketCapUsd: number;
+  change24hPct: number;
 };
 
 type HomePayload = {
@@ -83,7 +84,9 @@ export function HomePageClient() {
         <div className="figma-home-cards">
           {isLoading ? <LoadingState title="Loading tokens" description="Fetching latest market data." /> : topTokens.length === 0 ? <div className="figma-empty"><h3>No tokens yet</h3><p>Token cards will appear here after they are indexed into storage.</p></div> : topTokens.map((token) => {
             const hue = hueFromAddress(token.address);
-            const changeValue = ((Math.abs(hue - 180) / 180) * 30 + 2).toFixed(1);
+            const mcDisplay = token.marketCapUsd > 0 ? `$${formatDecimalDots(String(token.marketCapUsd), 0)}` : '-';
+            const changeValue = Number(token.change24hPct || 0);
+            const isPositive = changeValue >= 0;
             return (
               <Link key={token.address} href={`/token/${token.address}?side=buy`} className="figma-token-card">
                 <div className="figma-token-card-header">
@@ -97,9 +100,14 @@ export function HomePageClient() {
                 </div>
                 <div className="figma-token-card-stats">
                   <div className="figma-token-card-row"><span>Supply</span><b>{formatDecimalDots(token.totalSupplyFormatted, 0)}</b></div>
-                  <div className="figma-token-card-row"><span>Market Cap</span><b>{token.initialMarketCapUsd ? `$${formatDecimalDots(String(token.initialMarketCapUsd), 0)}` : '-'}</b></div>
+                  <div className="figma-token-card-row"><span>Market Cap</span><b>{mcDisplay}</b></div>
                 </div>
-                <div className="figma-token-card-change"><span>24h Change</span><span className="figma-token-card-change-value">+{changeValue}%</span></div>
+                <div className="figma-token-card-change">
+                  <span>24h Change</span>
+                  <span className={`figma-token-card-change-value ${isPositive ? '' : 'figma-token-card-change-value--negative'}`}>
+                    {isPositive ? '+' : ''}{formatDecimalDots(String(changeValue), 1)}%
+                  </span>
+                </div>
               </Link>
             );
           })}

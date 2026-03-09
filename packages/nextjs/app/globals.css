@@ -6422,6 +6422,15 @@ button:not(.ghost-button):not(.dex-direction):not(.dex-chip):not(.dex-chip-activ
   color: var(--success);
 }
 
+.figma-token-card-change-value--negative {
+  color: #ff6a6a;
+}
+
+.figma-token-card-change-value--negative svg {
+  color: #ff6a6a;
+  transform: rotate(180deg);
+}
+
 /* ══════════════════════════════════════════════════════════════════
    FIGMA NFT CARD V2 — Square media + stats
    Matches Figma screenshot: large cover image, name, minted

@@ -12,6 +12,7 @@ type TokenItem = {
   totalSupplyFormatted: string;
   isLaunched: boolean;
   marketCapUsd: number;
+  change24hPct: number;
 };
 
 type StatusFilter = 'all' | 'listed' | 'deployed';
@@ -124,14 +125,12 @@ export function TokenLaunchpadView({ items }: { items: TokenItem[] }) {
                 {/* 24h Change */}
                 <div className="figma-token-card-change">
                   <span>24h Change</span>
-                  <span className="figma-token-card-change-value">
+                  <span className={`figma-token-card-change-value ${token.change24hPct < 0 ? 'figma-token-card-change-value--negative' : ''}`}>
                     <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
                       <path d="M2 10L7 5L9.5 7.5L12 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                     </svg>
-                    {token.isLaunched ? '+' : ''}
-                    {token.marketCapUsd > 0
-                      ? `${((Math.abs(hue - 180) / 180) * 30 + 2).toFixed(1)}%`
-                      : '0.0%'}
+                    {token.change24hPct >= 0 ? '+' : ''}
+                    {formatDecimalDots(String(token.change24hPct || 0), 1)}%
                   </span>
                 </div>
               </Link>
