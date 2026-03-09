@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server';
 import { pinFileToIpfs, pinJsonToIpfs, ipfsGatewayUrl } from '~~/lib/pinata/server';
-import { savePinataAlias } from '~~/lib/pinata/alias-store';
 import {
   assertImageUpload,
   assertRateLimit,
@@ -64,13 +63,10 @@ export async function POST(request: Request) {
     const metadataCid = await pinJsonToIpfs(tokenMetadata, `${name}-token-metadata`);
     const collectionMetadataCid = await pinJsonToIpfs(collectionMetadata, `${name}-collection-metadata`);
 
-    const baseUriAlias = await savePinataAlias({
-      metadataCid,
-      imageCid,
-      name,
-      symbol,
-      description: tokenMetadata.description,
-    });
+    // Serverless environments cannot rely on local alias-store persistence.
+    // The collection contract already stores direct metadata/contract URIs, so
+    // base_uri can safely use the token metadata IPFS URI as a stable value.
+    const baseUriAlias = `ipfs://${metadataCid}`;
 
     return NextResponse.json({
       ok: true,
