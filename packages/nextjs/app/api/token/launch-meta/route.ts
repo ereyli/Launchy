@@ -4,6 +4,7 @@ import { assertRateLimit, assertSameOrigin, RouteGuardError } from '~~/lib/serve
 import { canonicalAddress } from '~~/lib/starknet/address';
 import { getServerRpcUrl } from '~~/lib/starknet/rpc';
 import { getTokenInitialMarketCapUsd, upsertTokenInitialMarketCapUsd } from '~~/lib/storage/market-store';
+import { persistTokenLaunchFromChain } from '~~/lib/token-launchpad/tokens';
 
 type Body = {
   tokenAddress?: string;
@@ -11,9 +12,9 @@ type Body = {
   startingMarketCapUsd?: string | number;
 };
 
-async function resolveTokenAddressFromTx(txHash: string) {
+async function resolveTokenFromTx(txHash: string): Promise<{ tokenAddress: string; blockNumber?: number }> {
   const factoryAddress = process.env.NEXT_PUBLIC_TOKEN_FACTORY_ADDRESS || '';
-  if (!factoryAddress) return '';
+  if (!factoryAddress) return { tokenAddress: '' };
   const provider = new RpcProvider({
     nodeUrl: getServerRpcUrl(),
   });
@@ -22,25 +23,35 @@ async function resolveTokenAddressFromTx(txHash: string) {
   const maxAttempts = 12;
   for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
     try {
-      const receipt = await provider.getTransactionReceipt(txHash);
-      const events = ((receipt as any)?.events ?? []) as Array<{
-        from_address?: string;
-        fromAddress?: string;
-        keys?: string[];
-        data?: string[];
-      }>;
+      const receipt = (await provider.getTransactionReceipt(txHash)) as {
+        events?: Array<{
+          from_address?: string;
+          fromAddress?: string;
+          keys?: string[];
+          data?: string[];
+        }>;
+        block_number?: number;
+        blockNumber?: number;
+      };
+      const events = receipt?.events ?? [];
       const event = events.find((item) => {
         const from = canonicalAddress(item.from_address ?? item.fromAddress ?? '0x0').toLowerCase();
         const selector = item.keys?.[0]?.toLowerCase();
         return from === factory && selector === createdSelector && Array.isArray(item.data) && item.data.length > 0;
       });
-      if (event?.data?.length) return canonicalAddress(event.data[event.data.length - 1] ?? '');
+      if (event?.data?.length) {
+        const blockCandidate = receipt?.block_number ?? receipt?.blockNumber;
+        return {
+          tokenAddress: canonicalAddress(event.data[event.data.length - 1] ?? ''),
+          blockNumber: typeof blockCandidate === 'number' ? blockCandidate : undefined,
+        };
+      }
     } catch {
       // retry until indexed
     }
     await new Promise((resolve) => setTimeout(resolve, 1500));
   }
-  return '';
+  return { tokenAddress: '' };
 }
 
 export async function POST(request: Request) {
@@ -54,7 +65,7 @@ export async function POST(request: Request) {
     if (!txHash) {
       return NextResponse.json({ error: 'txHash is required.' }, { status: 400 });
     }
-    const resolvedTokenAddress = await resolveTokenAddressFromTx(txHash);
+    const { tokenAddress: resolvedTokenAddress, blockNumber: resolvedBlockNumber } = await resolveTokenFromTx(txHash);
     const tokenAddress = tokenAddressRaw || resolvedTokenAddress;
     const initial = Number(body.startingMarketCapUsd ?? 0);
     if (!tokenAddress.startsWith('0x')) {
@@ -72,10 +83,16 @@ export async function POST(request: Request) {
       if (Math.abs(existing - initial) > 0.000001) {
         return NextResponse.json({ error: 'Launch metadata is already locked.' }, { status: 409 });
       }
-      return NextResponse.json({ ok: true });
+    } else {
+      await upsertTokenInitialMarketCapUsd(tokenAddress, initial);
     }
 
-    await upsertTokenInitialMarketCapUsd(tokenAddress, initial);
+    await persistTokenLaunchFromChain({
+      tokenAddress,
+      txHash,
+      blockNumber: resolvedBlockNumber,
+    }).catch(() => null);
+
     return NextResponse.json({ ok: true });
   } catch (error) {
     return NextResponse.json(
