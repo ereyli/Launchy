@@ -4,23 +4,7 @@ import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 import { formatDecimalDots, formatIntegerDots } from '~~/lib/format';
 import { LoadingState } from '~~/components/page-clients/loading-state';
-import type { LaunchCollection } from '~~/lib/launchpad/collections';
-
-type HomeToken = {
-  address: string;
-  name: string;
-  symbol: string;
-  logoImageUrl?: string;
-  totalSupplyFormatted: string;
-  isLaunched: boolean;
-  marketCapUsd: number;
-  change24hPct: number;
-};
-
-type HomePayload = {
-  collections: LaunchCollection[];
-  tokens: HomeToken[];
-};
+import type { HomePayload } from '~~/lib/server/ui-data';
 
 function hueFromAddress(address: string) {
   let hash = 0;
@@ -28,8 +12,9 @@ function hueFromAddress(address: string) {
   return hash;
 }
 
-export function HomePageClient() {
-  const [data, setData] = useState<HomePayload | null>(null);
+export function HomePageClient({ initialData }: { initialData: HomePayload }) {
+  const [data, setData] = useState<HomePayload>(initialData);
+  const [hasFetched, setHasFetched] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -39,20 +24,23 @@ export function HomePageClient() {
         if (active) setData(payload);
       })
       .catch(() => {
-        if (active) setData({ collections: [], tokens: [] });
+        // keep last known data on error
+      })
+      .finally(() => {
+        if (active) setHasFetched(true);
       });
     return () => {
       active = false;
     };
   }, []);
 
-  const tokens = data?.tokens ?? [];
-  const collections = data?.collections ?? [];
+  const tokens = data.tokens;
+  const collections = data.collections;
   const topTokens = tokens.slice(0, 3);
   const topNfts = collections.slice(0, 3);
   const totalMinted = useMemo(() => collections.reduce((acc, c) => acc + c.minted, 0), [collections]);
   const listed = useMemo(() => tokens.filter((t) => t.isLaunched).length, [tokens]);
-  const isLoading = data === null;
+  const isLoading = !hasFetched && tokens.length === 0 && collections.length === 0;
 
   return (
     <main className="figma-home">

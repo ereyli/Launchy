@@ -4,43 +4,28 @@ import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 import { ProfileTokenClaims } from '~~/components/figma/profile-token-claims';
 import { formatIntegerDots } from '~~/lib/format';
-import type { LaunchCollection } from '~~/lib/launchpad/collections';
+import type { ProfilePayload } from '~~/lib/server/ui-data';
 
-type ProfileToken = {
-  address: string;
-  owner: string;
-  name: string;
-  symbol: string;
-  logoImageUrl?: string;
-  isLaunched: boolean;
-  quoteAmountFormatted?: string;
-};
-
-type ProfilePayload = {
-  tokens: ProfileToken[];
-  collections: LaunchCollection[];
-};
-
-export function ProfilePageClient() {
-  const [data, setData] = useState<ProfilePayload | null>(null);
+export function ProfilePageClient({ initialData }: { initialData: ProfilePayload }) {
+  const [data, setData] = useState<ProfilePayload>(initialData);
 
   useEffect(() => {
     let active = true;
     fetch('/api/ui/profile')
       .then((res) => res.json())
       .then((payload: ProfilePayload) => {
-        if (active) setData(payload);
+        if (active && payload) setData(payload);
       })
       .catch(() => {
-        if (active) setData({ tokens: [], collections: [] });
+        // keep initial data
       });
     return () => {
       active = false;
     };
   }, []);
 
-  const tokens = data?.tokens ?? [];
-  const collections = data?.collections ?? [];
+  const tokens = data.tokens;
+  const collections = data.collections;
   const listedTokens = useMemo(() => tokens.filter((token) => token.isLaunched).length, [tokens]);
   const totalMinted = useMemo(() => collections.reduce((acc, c) => acc + c.minted, 0), [collections]);
 

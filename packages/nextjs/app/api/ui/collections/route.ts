@@ -1,9 +1,9 @@
 import { NextResponse } from 'next/server';
-import { fetchLaunchpadData } from '~~/lib/launchpad/collections';
+import { loadCollectionsPayload } from '~~/lib/server/ui-data';
 
-export const revalidate = 60;
+export const revalidate = 30;
 
 export async function GET() {
-  const data = await fetchLaunchpadData();
-  return NextResponse.json(data);
+  const payload = await loadCollectionsPayload();
+  return NextResponse.json(payload);
 }

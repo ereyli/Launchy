@@ -3,7 +3,7 @@ import { fetchLaunchpadData, fetchLaunchpadMeta } from '~~/lib/launchpad/collect
 import { formatDecimalDots, formatIntegerDots } from '~~/lib/format';
 import { fetchLatestTokenLaunches } from '~~/lib/token-launchpad/tokens';
 
-export const dynamic = 'force-dynamic';
+export const revalidate = 60;
 
 export default async function DashboardPage() {
   const [nftData, launchpadMeta, tokens] = await Promise.all([fetchLaunchpadData(), fetchLaunchpadMeta(), fetchLatestTokenLaunches(120)]);

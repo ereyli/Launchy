@@ -269,7 +269,8 @@ export async function fetchTokenByAddress(address: string): Promise<TokenLaunchR
 }
 
 export async function fetchLatestTokenLaunches(limit = 24): Promise<TokenLaunchRecord[]> {
-  await syncTokenLaunchesFromChain().catch(() => undefined);
+  // Best-effort, do not block list fetch on chain sync.
+  void syncTokenLaunchesFromChain().catch(() => undefined);
   const cached = await listTokenLaunchRows(limit);
   const initialMcs = await getTokenInitialMarketCapUsdMap();
   const profiles = await getTokenProfilesMap();
