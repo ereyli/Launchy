@@ -19,14 +19,17 @@ export function SiteFooter() {
 
         <div className="site-footer-meta">
           <p className="site-footer-built">
-            Built on{' '}
+            Deploys on{' '}
             <a href="https://www.starknet.io" target="_blank" rel="noopener noreferrer">Starknet</a>
             {' '}·{' '}
-            Powered by{' '}
+            Trades via{' '}
             <a href="https://ekubo.org" target="_blank" rel="noopener noreferrer">Ekubo</a>
           </p>
           <p className="site-footer-copyright">
             &copy; {year} Launchy. All rights reserved.
+          </p>
+          <p className="site-footer-disclaimer">
+            Independent project. Not affiliated with or endorsed by Starknet or Ekubo.
           </p>
         </div>
       </div>
