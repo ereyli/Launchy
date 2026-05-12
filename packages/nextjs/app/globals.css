@@ -5090,18 +5090,39 @@ input[type="file"]::file-selector-button:hover {
 }
 
 .create-mode-switch button {
-  border: 1px solid var(--border-default);
-  background: var(--bg-card);
-  color: var(--text-secondary);
+  border: 1px solid var(--border-subtle) !important;
+  background: rgba(255, 255, 255, 0.03) !important;
+  color: var(--text-secondary) !important;
   border-radius: var(--radius-md);
-  padding: 0.65rem 0.8rem;
-  font-weight: 600;
+  padding: 0.7rem 0.9rem;
+  font-weight: 500;
+  box-shadow: none !important;
+  transform: none !important;
+  transition: all var(--transition-base);
 }
 
-.create-mode-switch-active {
-  border-color: var(--border-accent) !important;
+.create-mode-switch button::before {
+  display: none !important;
+}
+
+.create-mode-switch button:hover {
+  background: rgba(255, 255, 255, 0.06) !important;
+  border-color: var(--border-default) !important;
   color: var(--text-primary) !important;
-  background: rgba(236, 121, 107, 0.12) !important;
+}
+
+.create-mode-switch button.create-mode-switch-active {
+  background: var(--gradient-brand) !important;
+  border-color: transparent !important;
+  color: var(--text-inverse) !important;
+  font-weight: 700;
+  box-shadow: 0 0 20px rgba(255, 107, 88, 0.35), 0 4px 14px rgba(232, 93, 58, 0.25) !important;
+}
+
+.create-mode-switch button.create-mode-switch-active:hover {
+  background: var(--gradient-brand) !important;
+  color: var(--text-inverse) !important;
+  transform: translateY(-1px) !important;
 }
 
 .create-step-strip {
