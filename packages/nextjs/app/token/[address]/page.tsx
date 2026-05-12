@@ -7,6 +7,7 @@ import { TokenTradePanel } from '~~/components/token-trade-panel';
 import { env } from '~~/lib/config';
 import { formatDecimalDots } from '~~/lib/format';
 import { canonicalAddress, checksumAddress, sameAddress, shortAddress } from '~~/lib/starknet/address';
+import { attachLiveTokenMarket } from '~~/lib/token-launchpad/live-market';
 import { fetchTokenByAddress } from '~~/lib/token-launchpad/tokens';
 
 export default async function TokenDetailsPage({
@@ -23,9 +24,11 @@ export default async function TokenDetailsPage({
     env.NEXT_PUBLIC_STRK_ADDRESS || '0x04718f5a0fc34cc1af16a1cdee98ffb20c31f5cd61d6ab07201858f4287c938d',
   );
 
-  let token;
+  let token: Awaited<ReturnType<typeof fetchTokenByAddress>> & { marketCapUsd?: number; change24hPct?: number };
   try {
-    token = await fetchTokenByAddress(address);
+    const raw = await fetchTokenByAddress(address);
+    const enriched = await attachLiveTokenMarket([raw]).catch(() => [raw]);
+    token = enriched[0] as typeof token;
   } catch {
     notFound();
   }
@@ -77,6 +80,20 @@ export default async function TokenDetailsPage({
             <span className="muted">Supply</span>
             <strong>{formatDecimalDots(token.totalSupplyFormatted, 0)}</strong>
           </article>
+          {(token.marketCapUsd ?? 0) > 0 ? (
+            <article className="compact-meta-item">
+              <span className="muted">Market Cap</span>
+              <strong className="token-mc-value">${formatDecimalDots(String(Math.round(token.marketCapUsd!)), 0)}</strong>
+            </article>
+          ) : null}
+          {token.change24hPct !== undefined ? (
+            <article className="compact-meta-item">
+              <span className="muted">24h Change</span>
+              <strong className={`token-change-value ${(token.change24hPct ?? 0) < 0 ? 'token-change-negative' : 'token-change-positive'}`}>
+                {(token.change24hPct ?? 0) >= 0 ? '+' : ''}{formatDecimalDots(String((token.change24hPct ?? 0).toFixed(2)), 2)}%
+              </strong>
+            </article>
+          ) : null}
           <article className="compact-meta-item">
             <span className="muted">Owner</span>
             <div className="inline-row">
@@ -90,6 +107,14 @@ export default async function TokenDetailsPage({
               <strong className="mono">{shortAddress(tokenAddress)}</strong>
               <CopyButton value={checksumAddress(tokenAddress)} />
             </div>
+          </article>
+          <article className="compact-meta-item">
+            <span className="muted">Status</span>
+            <strong>
+              <span className={`token-status-badge ${token.isLaunched ? 'token-status-live' : 'token-status-deployed'}`}>
+                {token.isLaunched ? 'Listed on Ekubo' : 'Deployed'}
+              </span>
+            </strong>
           </article>
         </div>
       </section>

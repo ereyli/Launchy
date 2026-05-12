@@ -99,8 +99,8 @@ export function WalletConnect({ compact = false }: { compact?: boolean }) {
         <>
           {!session.connected ? (
             <div className="wallet-actions">
-              <button type="button" className="wallet-provider wallet-provider-injected" onClick={connectInjected} disabled={isBusy}>
-                <span className="wallet-provider-dot" />
+              <button type="button" className="wallet-provider wallet-provider-injected wallet-connect-cta" onClick={connectInjected} disabled={isBusy}>
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 7H4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2z"/><circle cx="17" cy="13" r="1" fill="currentColor"/></svg>
                 {isBusy ? 'Connecting...' : 'Connect Wallet'}
               </button>
               <button type="button" className="wallet-provider wallet-provider-cartridge" onClick={connectCartridge} disabled={isBusy}>
@@ -113,7 +113,9 @@ export function WalletConnect({ compact = false }: { compact?: boolean }) {
               <span className={`wallet-state wallet-state-inline ${session.kind === 'cartridge' ? 'wallet-state-cartridge' : ''}`}>
                 {session.kind === 'cartridge' ? (
                   <Image src="/cartridge-logo.svg" alt="" width={16} height={16} className="wallet-provider-logo" />
-                ) : null}
+                ) : (
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{opacity:0.7}}><path d="M20 7H4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2z"/><circle cx="17" cy="13" r="1" fill="currentColor"/></svg>
+                )}
                 {addressLabel}
               </span>
               {session.kind === 'cartridge' ? (
@@ -136,8 +138,8 @@ export function WalletConnect({ compact = false }: { compact?: boolean }) {
           <span className="wallet-state">{addressLabel}</span>
           {!session.connected ? (
             <div className="wallet-actions">
-              <button type="button" className="wallet-provider wallet-provider-injected" onClick={connectInjected} disabled={isBusy}>
-                <span className="wallet-provider-dot" />
+              <button type="button" className="wallet-provider wallet-provider-injected wallet-connect-cta" onClick={connectInjected} disabled={isBusy}>
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 7H4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2z"/><circle cx="17" cy="13" r="1" fill="currentColor"/></svg>
                 {isBusy ? 'Connecting...' : 'Connect Wallet'}
               </button>
               <button type="button" className="wallet-provider wallet-provider-cartridge" onClick={connectCartridge} disabled={isBusy}>

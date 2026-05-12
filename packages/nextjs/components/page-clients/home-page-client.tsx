@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 import { formatDecimalDots, formatIntegerDots } from '~~/lib/format';
-import { LoadingState } from '~~/components/page-clients/loading-state';
+import { HomeNftsSkeleton, HomeTokensSkeleton } from '~~/components/page-clients/skeleton';
 import type { HomePayload } from '~~/lib/server/ui-data';
 
 function hueFromAddress(address: string) {
@@ -69,8 +69,15 @@ export function HomePageClient({ initialData }: { initialData: HomePayload }) {
           <div><h2>Featured Tokens</h2><p className="muted">Trending on Launchy</p></div>
           <Link href="/token-launchpad" className="home-section-more">View All →</Link>
         </div>
-        <div className="figma-home-cards">
-          {isLoading ? <LoadingState title="Loading tokens" description="Fetching latest market data." /> : topTokens.length === 0 ? <div className="figma-empty"><h3>No tokens yet</h3><p>Token cards will appear here after they are indexed into storage.</p></div> : topTokens.map((token) => {
+        {isLoading ? <HomeTokensSkeleton /> : <div className="figma-home-cards">
+          {topTokens.length === 0 ? (
+            <div className="figma-empty-cta">
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><circle cx="12" cy="12" r="8"/><path d="M12 7v5l3 3"/></svg>
+              <h3>No tokens yet</h3>
+              <p>Be the first to launch a token on Starknet.</p>
+              <a href="/create?type=token"><button>Launch Token</button></a>
+            </div>
+          ) : topTokens.map((token) => {
             const hue = hueFromAddress(token.address);
             const mcDisplay = token.marketCapUsd > 0 ? `$${formatDecimalDots(String(token.marketCapUsd), 0)}` : '-';
             const changeValue = Number(token.change24hPct || 0);
@@ -99,7 +106,7 @@ export function HomePageClient({ initialData }: { initialData: HomePayload }) {
               </Link>
             );
           })}
-        </div>
+        </div>}
       </section>
 
       <section className="figma-home-block">
@@ -107,8 +114,15 @@ export function HomePageClient({ initialData }: { initialData: HomePayload }) {
           <div><h2>Featured NFT Collections</h2><p className="muted">Popular collections on Launchy</p></div>
           <Link href="/nft-launchpad" className="home-section-more">View All →</Link>
         </div>
-        <div className="figma-home-cards">
-          {isLoading ? <LoadingState title="Loading collections" description="Fetching latest mint data." /> : topNfts.length === 0 ? <div className="figma-empty"><h3>No collections yet</h3><p>NFT cards will appear here after they are indexed into storage.</p></div> : topNfts.map((collection) => {
+        {isLoading ? <HomeNftsSkeleton /> : <div className="figma-home-cards">
+          {topNfts.length === 0 ? (
+            <div className="figma-empty-cta">
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="M3 9h18M9 21V9"/></svg>
+              <h3>No collections yet</h3>
+              <p>Create the first NFT collection on Starknet.</p>
+              <a href="/create?type=nft"><button>Create Collection</button></a>
+            </div>
+          ) : topNfts.map((collection) => {
             const hue = hueFromAddress(collection.address);
             return (
               <Link key={collection.address} href={`/collection/${collection.address}`} className="figma-nft-card-v2">
@@ -126,7 +140,7 @@ export function HomePageClient({ initialData }: { initialData: HomePayload }) {
               </Link>
             );
           })}
-        </div>
+        </div>}
       </section>
 
       <section className="figma-home-steps">

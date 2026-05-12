@@ -2,6 +2,7 @@ import './globals.css';
 import type { Metadata } from 'next';
 import Script from 'next/script';
 import { MobileBottomNav } from '~~/components/mobile-bottom-nav';
+import { SiteFooter } from '~~/components/site-footer';
 import { SiteHeader } from '~~/components/site-header';
 import { getSiteUrl } from '~~/lib/site-url';
 
@@ -49,6 +50,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <div className="container shell">
           <SiteHeader networkLabel={networkLabel} />
           <div className="page-flow">{children}</div>
+          <SiteFooter />
         </div>
         <MobileBottomNav />
       </body>

@@ -263,8 +263,29 @@ export function TokenCreateForm() {
     setIsUploadingLogo(false);
   }
 
+  const formStep = deployResult ? 3 : isDeploying ? 2 : 1;
+
   return (
     <>
+      <div className="token-form-steps" aria-label="Progress">
+        {(['Token Info', 'Deploy & Launch', 'Success'] as const).map((label, idx) => {
+          const stepNum = idx + 1;
+          const isDone = formStep > stepNum;
+          const isActive = formStep === stepNum;
+          return (
+            <div key={label} className={`token-form-step ${isActive ? 'token-form-step--active' : ''} ${isDone ? 'token-form-step--done' : ''}`}>
+              <div className="token-form-step-circle">
+                {isDone ? (
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round"><polyline points="20 6 9 17 4 12"/></svg>
+                ) : stepNum}
+              </div>
+              <span>{label}</span>
+              {idx < 2 && <div className="token-form-step-line" />}
+            </div>
+          );
+        })}
+      </div>
+
       <form className="panel form-grid form-ultra" onSubmit={onSubmit}>
         <h2 className="card-title">Create + Launch Token</h2>
         <div className="token-logo-row">

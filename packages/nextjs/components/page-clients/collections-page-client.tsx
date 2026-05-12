@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { NftLaunchpadView } from '~~/components/figma/nft-launchpad-view';
-import { LoadingState } from '~~/components/page-clients/loading-state';
+import { NftGridSkeleton } from '~~/components/page-clients/skeleton';
 import type { LaunchCollection } from '~~/lib/launchpad/collections';
 
 export function CollectionsPageClient({ initialItems }: { initialItems: LaunchCollection[] }) {
@@ -35,11 +35,7 @@ export function CollectionsPageClient({ initialItems }: { initialItems: LaunchCo
         <h1>NFT Launchpad</h1>
         <p>Discover and mint NFT collections on Starknet</p>
       </section>
-      {showLoading ? (
-        <section className="figma-panel"><LoadingState title="Loading collections" description="Preparing launchpad data." /></section>
-      ) : (
-        <NftLaunchpadView items={items} />
-      )}
+      {showLoading ? <NftGridSkeleton count={9} /> : <NftLaunchpadView items={items} />}
     </main>
   );
 }

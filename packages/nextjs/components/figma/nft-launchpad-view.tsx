@@ -161,9 +161,22 @@ export function NftLaunchpadView({ items }: { items: LaunchCollection[] }) {
       {/* ── Collection Grid ── */}
       {filtered.length === 0 ? (
         <section className="figma-panel">
-          <div className="figma-empty">
-            <h3>No collections found</h3>
-            <p>Try adjusting your search or filter criteria.</p>
+          <div className="figma-empty-cta">
+            {searchQuery || priceFilter !== 'all' ? (
+              <>
+                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+                <h3>No collections found</h3>
+                <p>Try adjusting your search or filter criteria.</p>
+                <button type="button" onClick={() => { setSearchQuery(''); setPriceFilter('all'); }}>Clear Filters</button>
+              </>
+            ) : (
+              <>
+                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="M3 9h18M9 21V9"/></svg>
+                <h3>No collections yet</h3>
+                <p>Create the first NFT collection on this Starknet launchpad.</p>
+                <a href="/create?type=nft"><button>Create Collection</button></a>
+              </>
+            )}
           </div>
         </section>
       ) : (

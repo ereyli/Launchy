@@ -73,9 +73,22 @@ export function TokenLaunchpadView({ items }: { items: TokenItem[] }) {
       </div>
 
       {filtered.length === 0 ? (
-        <div className="figma-empty">
-          <h3>No tokens found</h3>
-          <p>Try adjusting your search or filter criteria.</p>
+        <div className="figma-empty-cta">
+          {searchQuery || statusFilter !== 'all' ? (
+            <>
+              <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+              <h3>No tokens found</h3>
+              <p>Try adjusting your search or filter criteria.</p>
+              <button type="button" onClick={() => { setSearchQuery(''); setStatusFilter('all'); }}>Clear Filters</button>
+            </>
+          ) : (
+            <>
+              <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><circle cx="12" cy="12" r="8"/><path d="M12 7v5l3 3"/></svg>
+              <h3>No tokens yet</h3>
+              <p>Be the first to launch a token on Starknet.</p>
+              <a href="/create?type=token"><button>Launch First Token</button></a>
+            </>
+          )}
         </div>
       ) : (
         <div className="figma-grid-3">
@@ -97,7 +110,13 @@ export function TokenLaunchpadView({ items }: { items: TokenItem[] }) {
                       {token.logoImageUrl ? (
                         <img src={token.logoImageUrl} alt={token.name} />
                       ) : (
-                        <span>{token.symbol.slice(0, 2).toUpperCase()}</span>
+                        <span className="token-avatar-placeholder">
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="token-avatar-coin-icon">
+                            <circle cx="12" cy="12" r="8"/>
+                            <path d="M12 6v12M9 9.5c0-1.1.9-2 2-2h2a2 2 0 0 1 0 4h-2a2 2 0 0 0 0 4h2a2 2 0 0 0 2-2"/>
+                          </svg>
+                          <span className="token-avatar-letters">{token.symbol.slice(0, 2).toUpperCase()}</span>
+                        </span>
                       )}
                     </div>
                     <div>
