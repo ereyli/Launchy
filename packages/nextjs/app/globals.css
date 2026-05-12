@@ -7494,14 +7494,6 @@ button:not(.ghost-button):not(.dex-direction):not(.dex-chip):not(.dex-chip-activ
   opacity: 0.65;
 }
 
-.site-footer-disclaimer {
-  margin: 0.3rem 0 0;
-  font-size: 0.7rem;
-  color: var(--text-secondary);
-  opacity: 0.45;
-  font-style: italic;
-}
-
 .site-footer-built a {
   color: var(--accent);
   opacity: 0.9;

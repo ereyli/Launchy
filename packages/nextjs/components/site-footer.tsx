@@ -28,9 +28,6 @@ export function SiteFooter() {
           <p className="site-footer-copyright">
             &copy; {year} Launchy. All rights reserved.
           </p>
-          <p className="site-footer-disclaimer">
-            Independent project. Not affiliated with or endorsed by Starknet or Ekubo.
-          </p>
         </div>
       </div>
     </footer>
